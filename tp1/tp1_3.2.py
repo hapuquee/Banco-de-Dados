@@ -9,6 +9,10 @@ def get_title(word_title):
 
 def describe_product(lineF, index_line, line_processed):
     """
+    Primeiro de tudo: eu te amo acima de todas as coisas :)
+
+    agora partindo pro trabalho:
+
     Processa as informações de um produto a partir de uma lista de linhas (lineF) e retorna os dados extraídos.
 
     Esta função percorre as linhas de um arquivo ou lista de strings, processando cada linha para extrair
