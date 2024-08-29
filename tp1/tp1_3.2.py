@@ -45,15 +45,10 @@ def describe_product(lineF, index_line, line_processed):
             #function from the map processing
             process_function = processing_map[key] 
 
-            #case for ASIN key: save the  asin to use as a key for the similars dic
-            if key == "ASIN":  
-                product_info[key.lower()] = process_function(line_processed)  
-                asin = process_function(line_processed) 
-
             #case for similar: the function returns two values: one for the product info (total) and one for the similar asin dic (a list with the "number" of the asin) 
-            elif key == "similar":
+            if key == "similar":
                 product_info[key.lower()] = process_function(line_processed)[0]
-                similar_asin[asin] = process_function(line_processed)[1]
+                similar_asin[product_info["asin"]] = process_function(line_processed)[1]
 
             #processing info for the others key, based on specific function returns a certain content
             else:
@@ -65,7 +60,8 @@ def describe_product(lineF, index_line, line_processed):
             break
     print("\n")    
     print("Asin DIC")
-    print(f"{asin}: {similar_asin[asin]}")
+    for chave, valor in similar_asin.items():
+        print(f"{chave} : {valor}")
 
     # Informações adicionais
     '''print(f"inputfile pos {index_line}: {lineF[index_line-1]} and {process_line(lineF[index_line-1])}")
