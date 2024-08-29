@@ -13,9 +13,8 @@ def get_title(word_title):
     return title
 
 def get_similar(similar_products):
-    total = similar_products[1]
     products = similar_products[2:]
-    return total, products
+    return products
 
 def describe_product(lineF, index_line, line_processed):
 
@@ -26,12 +25,11 @@ def describe_product(lineF, index_line, line_processed):
         "title": get_title,
         "group": get_value,
         "salesrank": get_value,
-        "similar": get_similar
+        "similar": get_value
     }
 
     product_info = {}
     similar_asin = {}
-    asin = ""
 
     print("Product Info")
 
@@ -44,15 +42,11 @@ def describe_product(lineF, index_line, line_processed):
 
             #function from the map processing
             process_function = processing_map[key] 
+            product_info[key.lower()] = process_function(line_processed)
 
             #case for similar: the function returns two values: one for the product info (total) and one for the similar asin dic (a list with the "number" of the asin) 
             if key == "similar":
-                product_info[key.lower()] = process_function(line_processed)[0]
-                similar_asin[product_info["asin"]] = process_function(line_processed)[1]
-
-            #processing info for the others key, based on specific function returns a certain content
-            else:
-                product_info[key.lower()] = process_function(line_processed)
+                similar_asin[product_info["asin"]] = get_similar(line_processed)
 
             print(f"{key.lower()}: {product_info[key.lower()]}")
             index_line += 1
