@@ -16,10 +16,23 @@ def get_title(word_title):
 def get_similar(word_similar):
     similar = word_similar[2:]
     return similar
-
+#OBS : mesma categoria com dois ids, precisamos tratar
+#OBS2: ver oq fica melhor como chave
 def process_categories(unpro_categories):
-    categories = unpro_categories.replace("\n", "").split("|")
-    return categories[1:]
+    categories_dic = {}
+    #the paramater is a list with all the lines of categories
+    for line in unpro_categories:
+        #take one line at time and divide the categories
+        categories = line.replace("\n", "").split("|")
+        
+        for category  in categories[1:]:
+            #check if is not empthy
+            if category:
+                name, id = category.split('[')
+                id = id.replace(']', '')
+                if id not in categories_dic:
+                    categories_dic[id] = name
+    return categories_dic
 
 def is_date(string_date): 
     date = r'^\d{4}-\d{1,2}-\d{1,2}$' # 'YYYY-M-D' date format, with 4 dig. year, 1-2 dig. month, and 1-2 digs. day.
@@ -74,7 +87,6 @@ def describe_product(lineF, index_line, line_processed): #redudent line_processe
 
     product_info = {}
     similar_asin = {}
-    categories = {}
     reviews = []
 
     #print("----------Product Info----------")
@@ -102,16 +114,19 @@ def describe_product(lineF, index_line, line_processed): #redudent line_processe
                     categories_list = []
                     while True:
                         index_line += 1
-                        line_categorie = process_categories(lineF[index_line])
+                        line_categorie = lineF[index_line]
 
                         #if is not empthy or in review section stops
-                        if not line_categorie or line_categorie[0] == "reviews":
+                        if not line_categorie or ("reviews" in line_categorie):
                             index_line -= 1
                             break
                         
+                        #just get each line of categorie
                         categories_list.append(line_categorie)
-                    #create the dic for the categories with id,asin as key
-                    categories[f'{product_info["id"]}, {product_info["asin"]}'] = categories_list
+
+                    if categories_list:
+                        #for each line of categorie, this function get the id and name of the categories and return a dic
+                        categories_dic = process_categories(categories_list)
 
                 elif key == "reviews":
                     write_keys_reviews(product_info)
@@ -139,11 +154,13 @@ def describe_product(lineF, index_line, line_processed): #redudent line_processe
         print("--------Similar Products:--------")
         if similar_asin[product_info["asin"]]:
             print(similar_asin[product_info["asin"]])
-    if categories:
+    if categories_dic:
         print("--------Categories:--------")
-        for categorie in categories[f'{product_info["id"]}, {product_info["asin"]}']:
-            print(categorie)
+        for id, nome in categories_dic.items():
+            print(f'{id}:{nome}')
+
     if reviews:
+        print("--------Reviews:--------")
         for review in reviews:
             print(review)
 
