@@ -24,14 +24,29 @@ def process_categories(unpro_categories):
     for line in unpro_categories:
         #take one line at time and divide the categories
         categories = line.replace("\n", "").split("|")
-        
+        id_parent = None
         for category  in categories[1:]:
             #check if is not empthy
-            if category:
-                name, id = category.split('[')
-                id = id.replace(']', '')
-                if id not in categories_dic:
-                    categories_dic[id] = name
+            parts = category.split('[')
+
+            # Check if the string has multiple brackets (special case)
+            if len(parts) == 3:
+                # Handle special case where you have two brackets
+                name = parts[0].strip() + ', ' + parts[1].replace(']', '').strip()  # "Williams, John, guitar"
+                id = parts[2].replace(']', '').strip()  # "63054"
+            elif len(parts) == 2:
+                # Handle regular case where only one bracket exists
+                name = parts[0].strip()
+                id = parts[1].replace(']', '').strip()
+            else:
+                # Handle cases where the format doesn't match expected patterns
+                name = category
+                id = None
+                
+            if id not in categories_dic:
+                categories_dic[id] = name, id_parent
+            
+            id_parent = id
     return categories_dic
 
 def is_date(string_date): 
@@ -88,6 +103,7 @@ def describe_product(lineF, index_line, line_processed): #redudent line_processe
     product_info = {}
     similar_asin = {}
     reviews = []
+    categories_dic = {}
 
     #print("----------Product Info----------")
 
