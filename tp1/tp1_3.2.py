@@ -16,6 +16,7 @@ def get_title(word_title):
 def get_similar(word_similar):
     similar = word_similar[2:]
     return similar
+
 #OBS : mesma categoria com dois ids, precisamos tratar
 #OBS2: ver oq fica melhor como chave
 def process_categories(unpro_categories):
@@ -62,10 +63,9 @@ def is_date(string_date):
     del product_info['reviews'] """
 
 
-def describe_product(lineF, index_line, line_processed): #redudent line_processed
+def describe_product(lineF, index_line): 
 
     #Mapping keys to processing functions
-    print(f"line processed into describe product: {line_processed}")
     processing_map = { 
         "Id": get_value,
         "ASIN": get_value,
@@ -79,7 +79,7 @@ def describe_product(lineF, index_line, line_processed): #redudent line_processe
     reviews = []
     categories_dic = {}
 
-    #print("----------Product Info----------")
+    print("----------Product Info----------")
 
     while index_line < len(lineF):
         #list of strings from one line
@@ -178,7 +178,7 @@ def process_file(input_file):
             line_processed = process_line(linesF[index_line])
             if line_processed:
                 if "Id" in line_processed[0]:
-                    describe_product(linesF, index_line, line_processed)
+                    describe_product(linesF, index_line)
                 index_line +=1
             index_line +=1  
 
