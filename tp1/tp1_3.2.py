@@ -24,7 +24,7 @@ def process_categories(unpro_categories):
     for line in unpro_categories:
         #take one line at time and divide the categories
         categories = line.replace("\n", "").split("|")
-        id_parent = None
+
         for category  in categories[1:]:
             #check if is not empthy
             parts = category.split('[')
@@ -43,46 +43,23 @@ def process_categories(unpro_categories):
                 name = category
                 id = None
                 
-            if id not in categories_dic:
-                categories_dic[id] = name, id_parent
+            if (id not in categories_dic) and name:
+                categories_dic[id] = name
             
-            id_parent = id
     return categories_dic
 
 def is_date(string_date): 
     date = r'^\d{4}-\d{1,2}-\d{1,2}$' # 'YYYY-M-D' date format, with 4 dig. year, 1-2 dig. month, and 1-2 digs. day.
     return bool(re.match(date, string_date))
 
-def get_info_review(word_review):
-    info_review = []
-    i = 1
-    #start in index 1 (0 = review)
-    while i < len(word_review) - 1:
-        info = word_review[i]
-        value = word_review[i + 1]
-        
-        if info == 'avg':
-            info = 'avg_rating'
-            value = word_review[i + 2]
-            #already process 3 positions: avg, rating, value
-            i += 3  
-        else:
-            #process 2 itens: info, value, jump to next one info
-            i += 2  
-        
-        info_review.append((info, value))
-    
-    #a list of tuples 
-    return info_review
-
-def write_keys_reviews(product_info):
+""" def write_keys_reviews(product_info):
     #delete the key review in the product dict and add others keys 
     infos = product_info["reviews"]
 
     for info, value in infos:
         product_info[f'{info}_review'] = value
 
-    del product_info['reviews']
+    del product_info['reviews'] """
 
 
 def describe_product(lineF, index_line, line_processed): #redudent line_processed
@@ -95,9 +72,6 @@ def describe_product(lineF, index_line, line_processed): #redudent line_processe
         "title": get_title,
         "group": get_value,
         "salesrank": get_value,
-        "similar": get_value,
-        "categories": get_value,
-        "reviews": get_info_review
     }
 
     product_info = {}
@@ -112,52 +86,56 @@ def describe_product(lineF, index_line, line_processed): #redudent line_processe
         line_processed = process_line(lineF[index_line]) 
         if line_processed:
             key = line_processed[0]
-
+            
             if key in processing_map:
                 #function from the map processing
                 process_function = processing_map[key] 
                 product_info[key.lower()] = process_function(line_processed)
 
-                #case for similar: the function returns two values: one for the product info (total) and one for the similar asin dic (a list with the "number" of the asin) 
-                if key == "similar":
-                    #if the categories is 0, the rest os list is empthy
-                    if len(line_processed[2:])>0:
-                        similar_asin[product_info["asin"]] = get_similar(line_processed)
-
-                #special case: save the categories/sub categories for the prodduct, the key is (id, asin)
-                elif key == "categories":
-                    #list to save each line of categorie
-                    categories_list = []
-                    while True:
-                        index_line += 1
-                        line_categorie = lineF[index_line]
-
-                        #if is not empthy or in review section stops
-                        if not line_categorie or ("reviews" in line_categorie):
-                            index_line -= 1
-                            break
-                        
-                        #just get each line of categorie
-                        categories_list.append(line_categorie)
-
-                    if categories_list:
-                        #for each line of categorie, this function get the id and name of the categories and return a dic
-                        categories_dic = process_categories(categories_list)
-
-                elif key == "reviews":
-                    write_keys_reviews(product_info)
-                #print(f"{key.lower()}: {product_info[key.lower()]}")
                 index_line += 1
 
-            elif is_date(line_processed[0]):
-                comment = []
-                comment.append(f"date: {line_processed[0]}")
-                comment.append(f"{line_processed[1]} = {line_processed[2]}")
-                comment.append(f"{line_processed[3]} = {line_processed[4]}")
-                comment.append(f"{line_processed[5]} = {line_processed[6]}")
-                comment.append(f"{line_processed[7]} = {line_processed[8]}")
+            #special case: save the categories/sub categories for the prodduct, the key is (id, asin)
+            elif key == "categories":
+                #list to save each line of categorie
+                categories_list = []
+                while True:
+                    index_line += 1
+                    line_categorie = lineF[index_line]
+
+                    #if is not empthy or in review section stops
+                    if not line_categorie or ("reviews" in line_categorie):
+                        index_line -= 1
+                        break
+                    
+                    #just get each line of categorie
+                    categories_list.append(line_categorie)
+
+                if categories_list:
+                    #for each line of categorie, this function get the id and name of the categories and return a dic
+                    categories_dic = process_categories(categories_list)
+
+                index_line += 1
+
+            #case for similar: the function returns two values: one for the product info (total) and one for the similar asin dic (a list with the "number" of the asin) 
+            elif key == "similar":
+                #if the categories is 0, the rest os list is empthy
+                if len(line_processed[2:])>0:
+                    similar_asin[product_info["asin"]] = get_similar(line_processed)
                 index_line+=1
-                reviews.append(comment)
+
+            elif key == "reviews":
+                index_line += 1
+                
+            elif is_date(key):
+                    comment = []
+                    comment.append(f"date: {line_processed[0]}")
+                    comment.append(f"{line_processed[1]} = {line_processed[2]}")
+                    comment.append(f"{line_processed[3]} = {line_processed[4]}")
+                    comment.append(f"{line_processed[5]} = {line_processed[6]}")
+                    comment.append(f"{line_processed[7]} = {line_processed[8]}")
+                    index_line+=1
+                    reviews.append(comment)
+            
             else:
                 break
         else:
@@ -185,6 +163,9 @@ def describe_product(lineF, index_line, line_processed): #redudent line_processe
     """ print(f"inputfile pos {index_line}: {lineF[index_line-1]} and {process_line(lineF[index_line-1])}")
     if index_line < len(lineF):
         print(f"prox line: {lineF[index_line]}") """
+    
+    print('PRODUCT INFO\n')
+    print(product_info)
 
     return index_line, product_info
 
