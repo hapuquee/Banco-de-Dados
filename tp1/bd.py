@@ -48,7 +48,7 @@ def create_product_table(connection):
     # SQL para criar a tabela
     create_table_query = """
     CREATE TABLE product (
-        assin INTEGER,
+        assin INTEGER PRIMARY KEY,
         title VARCHAR(200),
         "group" VARCHAR(50),
         salerank INTEGER
@@ -65,13 +65,137 @@ def create_product_table(connection):
         # Fechar o cursor
         cur.close()
 
+def create_product_category_table(connection):
+    # Abrir um cursor para realizar operações no banco de dados
+    cur = connection.cursor()
+
+    # SQL para criar a tabela product_category
+    create_table_query = """
+    CREATE TABLE product_category (
+        assin INTEGER,
+        id_category INTEGER,
+        PRIMARY KEY (assin, id_category),
+        FOREIGN KEY (assin) REFERENCES product(assin)
+    );
+    """
+    
+    try:
+        # Executar o comando SQL para criar a tabela
+        cur.execute(create_table_query)
+        print("Tabela 'product_category' criada com sucesso.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao criar a tabela 'product_category': {e}")
+    finally:
+        # Fechar o cursor
+        cur.close()
+
+def create_category_table(connection):
+    # Abrir um cursor para realizar operações no banco de dados
+    cur = connection.cursor()
+
+    # SQL para criar a tabela category
+    create_table_query = """
+    CREATE TABLE category (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(60) NOT NULL
+    );
+    """
+    
+    try:
+        # Executar o comando SQL para criar a tabela
+        cur.execute(create_table_query)
+        print("Tabela 'category' criada com sucesso.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao criar a tabela 'category': {e}")
+    finally:
+        # Fechar o cursor
+        cur.close()
+
+def create_similar_product_table(connection):
+    # Abrir um cursor para realizar operações no banco de dados
+    cur = connection.cursor()
+
+    # SQL para criar a tabela similar
+    create_table_query = """
+    CREATE TABLE similar_product (
+        assin INTEGER,
+        assin_similar INTEGER,
+        PRIMARY KEY (assin, assin_similar),
+        FOREIGN KEY (assin) REFERENCES product(assin),
+        FOREIGN KEY (assin_similar) REFERENCES product(assin)
+    );
+    """
+    
+    try:
+        # Executar o comando SQL para criar a tabela
+        cur.execute(create_table_query)
+        print("Tabela 'similar_product' criada com sucesso.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao criar a tabela 'similar_product': {e}")
+    finally:
+        # Fechar o cursor
+        cur.close()
+
+def create_product_subcategory_table(connection):
+    # Abrir um cursor para realizar operações no banco de dados
+    cur = connection.cursor()
+
+    # SQL para criar a tabela product_subcategory
+    create_table_query = """
+    CREATE TABLE product_subcategory (
+        assin INTEGER,
+        id_category INTEGER,
+        subcategory INTEGER,
+        PRIMARY KEY (assin, id_category, subcategory),
+        FOREIGN KEY (assin, id_category) REFERENCES product_category(assin, id_category),
+        FOREIGN KEY (subcategory) REFERENCES category(id)
+    );
+    """
+    
+    try:
+        # Executar o comando SQL para criar a tabela
+        cur.execute(create_table_query)
+        print("Tabela 'product_subcategory' criada com sucesso.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao criar a tabela 'product_subcategory': {e}")
+    finally:
+        # Fechar o cursor
+        cur.close()
+
+def create_review_table(connection):
+    # Abrir um cursor para realizar operações no banco de dados
+    cur = connection.cursor()
+
+    # SQL para criar a tabela review
+    create_table_query = """
+    CREATE TABLE review (
+        id SERIAL PRIMARY KEY,
+        assin INTEGER,
+        costumer VARCHAR(20),
+        data VARCHAR(15),
+        rating INTEGER,
+        votes INTEGER,
+        helpful INTEGER,
+        FOREIGN KEY (assin) REFERENCES product(assin)
+    );
+    """
+    
+    try:
+        # Executar o comando SQL para criar a tabela
+        cur.execute(create_table_query)
+        print("Tabela 'review' criada com sucesso.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao criar a tabela 'review': {e}")
+    finally:
+        # Fechar o cursor
+        cur.close()
 
 # Exemplo de uso das funções
 if __name__ == "__main__":
     host = '172.17.0.2'
     user = 'postgres'
     password = '1234'
-    db_name = 'TP1BD'
+    db_name = 'TP1'
 
     # Verificar/criar o banco de dados e conectar
     connection = check_and_create_db(host, user, password, db_name)
@@ -80,6 +204,11 @@ if __name__ == "__main__":
     perform_db_operation(connection)
 
     create_product_table(connection)
+    create_product_category_table(connection)
+    create_category_table(connection)
+    create_similar_product_table(connection)
+    create_product_subcategory_table(connection)
+    create_review_table(connection)
 
     # Fechar a conexão
     connection.close()
