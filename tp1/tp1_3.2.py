@@ -67,6 +67,8 @@ def describe_product(lineF, index_line):
     similar_asin = []
     reviews = []
     categories_dic = {}
+    prod_category = ()
+    prod_subcategory = []
 
     print("----------Product Info----------")
 
@@ -116,13 +118,14 @@ def describe_product(lineF, index_line):
                 index_line += 1
                 
             elif is_date(key):
-                    comment = []
-                    comment.append(f"asin: {product_info['asin']}")
-                    comment.append(f"date: {line_processed[0]}")
-                    comment.append(f"{line_processed[1]} = {line_processed[2]}")
-                    comment.append(f"{line_processed[3]} = {line_processed[4]}")
-                    comment.append(f"{line_processed[5]} = {line_processed[6]}")
-                    comment.append(f"{line_processed[7]} = {line_processed[8]}")
+                    comment = (
+                        product_info['asin'],
+                        line_processed[0],
+                        line_processed[2],
+                        line_processed[4],
+                        line_processed[6],
+                        line_processed[8]
+                    )
                     index_line+=1
                     reviews.append(comment)
             
@@ -131,9 +134,9 @@ def describe_product(lineF, index_line):
         else:
             break
         
-            
+    prod_info = []
     for key, value in product_info.items():
-        print(f'{key}:{value}')
+        prod_info.append(value)
     if similar_asin:
         print("--------Similar Products:--------")
         for x in similar_asin:
@@ -150,12 +153,12 @@ def describe_product(lineF, index_line):
 
     print("\n")
     # Informações adicionais
-    """ print(f"inputfile pos {index_line}: {lineF[index_line-1]} and {process_line(lineF[index_line-1])}")
+    """ print(f"inputfile pos {index_line}: {lineF[index_line-1]} and {process_line(lineF[index_line-1]))
     if index_line < len(lineF):
-        print(f"prox line: {lineF[index_line]}") """
+        print(f"prox line: {lineF[index_line]) """
     
     print('PRODUCT INFO')
-    print(product_info)
+    print(tuple(prod_info))
     print('PRODUCT SIMILAR')
     print(similar_asin)
 
