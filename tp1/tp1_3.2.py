@@ -53,6 +53,16 @@ def is_date(string_date):
     date = r'^\d{4}-\d{1,2}-\d{1,2}$' # 'YYYY-M-D' date format, with 4 dig. year, 1-2 dig. month, and 1-2 digs. day.
     return bool(re.match(date, string_date))
 
+def to_int(value):
+    #returns a list of the match
+    number_str = re.findall(r'\d+', value)
+    #check if is has somenthing
+    if number_str:  
+        #transform to int
+        return int(number_str[0])  
+    return None  
+
+
 def describe_product(lineF, index_line): 
 
     #Mapping keys to processing functions
@@ -67,8 +77,6 @@ def describe_product(lineF, index_line):
     similar_asin = []
     reviews = []
     categories_dic = {}
-    prod_category = ()
-    prod_subcategory = []
 
     print("----------Product Info----------")
 
@@ -89,7 +97,8 @@ def describe_product(lineF, index_line):
                 #if the categories is 0, the rest os list is empthy
                 if len(line_processed[2:])>0:
                     for similar in get_similar(line_processed):
-                        similar_asin.append((product_info["asin"], similar))
+                        #key is the product and the value is the similar product
+                        similar_asin.append({to_int(product_info["asin"]): to_int(similar)})
                 index_line+=1
 
             #special case: save the categories/sub categories for the prodduct, the key is (id, asin)
@@ -118,14 +127,15 @@ def describe_product(lineF, index_line):
                 index_line += 1
                 
             elif is_date(key):
-                    comment = (
-                        product_info['asin'],
-                        line_processed[0],
-                        line_processed[2],
-                        line_processed[4],
-                        line_processed[6],
-                        line_processed[8]
-                    )
+                    print(line_processed[4])
+                    comment = {
+                        "asin": to_int(product_info['asin']),
+                        "date": line_processed[0],
+                        line_processed[1]: line_processed[2],
+                        line_processed[3]: to_int(line_processed[4]),
+                        line_processed[5]: to_int(line_processed[6]),
+                        line_processed[7]: to_int(line_processed[8])
+                    }
                     index_line+=1
                     reviews.append(comment)
             
@@ -134,9 +144,9 @@ def describe_product(lineF, index_line):
         else:
             break
         
-    prod_info = []
-    for key, value in product_info.items():
-        prod_info.append(value)
+            
+    """ for key, value in product_info.items():
+        print(f'{key}:{value}')
     if similar_asin:
         print("--------Similar Products:--------")
         for x in similar_asin:
@@ -149,18 +159,21 @@ def describe_product(lineF, index_line):
     if reviews:
         print("--------Reviews:--------")
         for review in reviews:
-            print(review)
+            print(review) """
 
     print("\n")
     # Informações adicionais
-    """ print(f"inputfile pos {index_line}: {lineF[index_line-1]} and {process_line(lineF[index_line-1]))
+    """ print(f"inputfile pos {index_line}: {lineF[index_line-1]} and {process_line(lineF[index_line-1])}")
     if index_line < len(lineF):
-        print(f"prox line: {lineF[index_line]) """
+        print(f"prox line: {lineF[index_line]}") """
     
     print('PRODUCT INFO')
-    print(tuple(prod_info))
+    print(product_info)
     print('PRODUCT SIMILAR')
     print(similar_asin)
+    print('REVIEWS')
+    for i in reviews:
+        print(i)
 
     return index_line, product_info
 
