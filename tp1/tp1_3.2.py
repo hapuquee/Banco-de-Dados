@@ -53,21 +53,10 @@ def is_date(string_date):
     date = r'^\d{4}-\d{1,2}-\d{1,2}$' # 'YYYY-M-D' date format, with 4 dig. year, 1-2 dig. month, and 1-2 digs. day.
     return bool(re.match(date, string_date))
 
-""" def write_keys_reviews(product_info):
-    #delete the key review in the product dict and add others keys 
-    infos = product_info["reviews"]
-
-    for info, value in infos:
-        product_info[f'{info}_review'] = value
-
-    del product_info['reviews'] """
-
-
 def describe_product(lineF, index_line): 
 
     #Mapping keys to processing functions
     processing_map = { 
-        "Id": get_value,
         "ASIN": get_value,
         "title": get_title,
         "group": get_value,
@@ -75,7 +64,7 @@ def describe_product(lineF, index_line):
     }
 
     product_info = {}
-    similar_asin = {}
+    similar_asin = []
     reviews = []
     categories_dic = {}
 
@@ -91,8 +80,15 @@ def describe_product(lineF, index_line):
                 #function from the map processing
                 process_function = processing_map[key] 
                 product_info[key.lower()] = process_function(line_processed)
-
                 index_line += 1
+
+            #case for similar: the function returns two values: one for the product info (total) and one for the similar asin dic (a list with the "number" of the asin) 
+            elif key == "similar":
+                #if the categories is 0, the rest os list is empthy
+                if len(line_processed[2:])>0:
+                    for similar in get_similar(line_processed):
+                        similar_asin.append((product_info["asin"], similar))
+                index_line+=1
 
             #special case: save the categories/sub categories for the prodduct, the key is (id, asin)
             elif key == "categories":
@@ -116,18 +112,12 @@ def describe_product(lineF, index_line):
 
                 index_line += 1
 
-            #case for similar: the function returns two values: one for the product info (total) and one for the similar asin dic (a list with the "number" of the asin) 
-            elif key == "similar":
-                #if the categories is 0, the rest os list is empthy
-                if len(line_processed[2:])>0:
-                    similar_asin[product_info["asin"]] = get_similar(line_processed)
-                index_line+=1
-
             elif key == "reviews":
                 index_line += 1
                 
             elif is_date(key):
                     comment = []
+                    comment.append(f"asin: {product_info['asin']}")
                     comment.append(f"date: {line_processed[0]}")
                     comment.append(f"{line_processed[1]} = {line_processed[2]}")
                     comment.append(f"{line_processed[3]} = {line_processed[4]}")
@@ -146,8 +136,8 @@ def describe_product(lineF, index_line):
         print(f'{key}:{value}')
     if similar_asin:
         print("--------Similar Products:--------")
-        if similar_asin[product_info["asin"]]:
-            print(similar_asin[product_info["asin"]])
+        for x in similar_asin:
+            print(x[1])
     if categories_dic:
         print("--------Categories:--------")
         for id, nome in categories_dic.items():
@@ -164,8 +154,10 @@ def describe_product(lineF, index_line):
     if index_line < len(lineF):
         print(f"prox line: {lineF[index_line]}") """
     
-    print('PRODUCT INFO\n')
+    print('PRODUCT INFO')
     print(product_info)
+    print('PRODUCT SIMILAR')
+    print(similar_asin)
 
     return index_line, product_info
 
@@ -177,9 +169,8 @@ def process_file(input_file):
         while index_line < len(linesF):
             line_processed = process_line(linesF[index_line])
             if line_processed:
-                if "Id" in line_processed[0]:
+                if "ASIN" in line_processed[0]:
                     describe_product(linesF, index_line)
-                index_line +=1
             index_line +=1  
 
 input_file = sys.argv[1]
