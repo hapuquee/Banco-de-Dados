@@ -1,5 +1,7 @@
 import psycopg2
 from psycopg2 import sql
+from psycopg2.extras import execute_values
+
 
 # Função para conectar a um banco de dados específico
 def connect_to_db(host, user, password, dbname):
@@ -96,8 +98,7 @@ def create_similar_product_table():
         assin INTEGER,
         assin_similar INTEGER,
         PRIMARY KEY (assin, assin_similar),
-        FOREIGN KEY (assin) REFERENCES product(assin),
-        FOREIGN KEY (assin_similar) REFERENCES product(assin)
+        FOREIGN KEY (assin) REFERENCES product(assin)
     );
     """
     
@@ -153,7 +154,9 @@ def create_review_table():
         id SERIAL PRIMARY KEY,
         assin INTEGER,
         costumer VARCHAR(20),
-        data VARCHAR(15),
+        ano INTEGER,
+        mes INTEGER,
+        dia INTEGER,
         rating INTEGER,
         votes INTEGER,
         helpful INTEGER,
@@ -171,7 +174,6 @@ def create_review_table():
         # Fechar o cursor
         cur.close()
         con.close()
-
 
 def check_and_create_db(host, user, password, db_name):
     con = connect_to_db(host, user, password, 'postgres')  # Conectar ao banco 'postgres'
@@ -197,6 +199,139 @@ def check_and_create_db(host, user, password, db_name):
     # Retornar a nova conexão ao banco de dados (novo ou existente)
     return 
 
+def insert_product(dados):
+    # Conectar ao banco de dados
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    cur = con.cursor()
+    
+    # SQL para inserir dados na tabela product
+    insert_query = """
+    INSERT INTO product (assin, title, "group", salerank)
+    VALUES %s;
+    """
+    
+    try:
+        # Executar o comando de inserção
+        execute_values(cur, insert_query, dados)
+        print("Produto inserido com sucesso.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao inserir o produto: {e}")
+    finally:
+        # Fechar o cursor e a conexão
+        cur.close()
+        con.close()
+
+def insert_product_category(dados):
+    #Conectar ao bd
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    cur = con.cursor()
+
+    #query para inserção
+    insert_query = """
+    INSERT INTO product_category (assin, id_category)
+    VALUES %s;
+    """
+
+    try:
+        #executar comando de inserção
+        execute_values(cur, insert_query, dados)
+        print("Product_category inserido com sucesso")
+    except Exception as e:
+        print(f"Ocorreu um erro ao inserir product_category: {e}")
+    finally:
+        cur.close()
+        con.close()
+   
+def insert_category(dados):
+    #Conectar ao bd
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    cur = con.cursor()
+
+    #query para inserção
+    insert_query = """
+    INSERT INTO category (name)
+    VALUES %s;
+    """
+
+    try:
+        #executar comando de inserção
+        execute_values(cur, insert_query, dados)
+        print("Category inserido com sucesso")
+    except Exception as e:
+        print(f"Ocorreu um erro ao inserir category: {e}")
+    finally:
+        cur.close()
+        con.close()
+
+def insert_similar(dados):
+    #Conectar ao bd
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    cur = con.cursor()
+
+    #query para inserção
+    insert_query = """
+    INSERT INTO similar_product (assin, assin_similar)
+    VALUES %s;
+    """
+
+    try:
+        #executar comando de inserção
+        execute_values(cur, insert_query, dados)
+        print("Similar inserido com sucesso")
+    except Exception as e:
+        print(f"Ocorreu um erro ao inserir Similar: {e}")
+    finally:
+        cur.close()
+        con.close()
+
+def insert_product_subcategory(dados):
+    #Conectar ao bd
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    cur = con.cursor()
+
+    #query para inserção
+    insert_query = """
+    INSERT INTO product_subcategory (assin, id_category, subcategory)
+    VALUES %s;
+    """
+
+    try:
+        #executar comando de inserção
+        execute_values(cur, insert_query, dados)
+        print("Product_subcategory inserido com sucesso")
+    except Exception as e:
+        print(f"Ocorreu um erro ao inserir product_subcategory: {e}")
+    finally:
+        cur.close()
+        con.close()
+
+def insert_review(dados):
+    #Conectar ao bd
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    cur = con.cursor()
+
+    #query para inserção
+    insert_query = """
+    INSERT INTO review (assin, costumer, ano, mes, dia, rating, votes, helpful)
+    VALUES %s;
+    """
+
+    try:
+        #executar comando de inserção
+        execute_values(cur, insert_query, dados)
+        print("Review inserido com sucesso")
+    except Exception as e:
+        print(f"Ocorreu um erro ao inserir review: {e}")
+    finally:
+        cur.close()
+        con.close()
+
 
 # Exemplo de uso das funções
 if __name__ == "__main__":
@@ -217,4 +352,10 @@ if __name__ == "__main__":
     create_similar_product_table()
     create_product_subcategory_table()
     create_review_table()
+    dados = [
+        (1105, 'karen hapuque', 'meu amor', 1),
+        (2019, 'resenha top', 'gatinha',5),
+        (2024, 'draconildo', 'cachorro', 100),
+    ]
+    insert_product(dados)
     
