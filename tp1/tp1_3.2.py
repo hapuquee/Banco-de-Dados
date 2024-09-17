@@ -7,6 +7,11 @@ def process_line(line):
 
 def get_value(word_value):
     value = word_value[1]
+    #check if is a number (asin, salesrank) and return a int
+    if value.isdigit():
+        return int(value)
+    else:
+        return value
     return value
 
 def get_title(word_title):
@@ -82,8 +87,15 @@ def describe_product(lineF, index_line):
     product_info = {}
     similar_asin = []
     reviews = []
+    prod_category = {}
     category_list = []
     prod_subcategory =[]
+
+    #verify if the product is discontinued
+    for i in range(index_line, min(index_line + 2, len(lineF))):
+        if "discontinued product" in lineF[i].lower():
+            #skip for the next product
+            return i + 1, {}, [], {}, [], [], []
 
     while index_line < len(lineF):
         #list of strings from one line
@@ -103,7 +115,7 @@ def describe_product(lineF, index_line):
                 if len(line_processed[2:])>0:
                     for similar in get_similar(line_processed):
                         #key is the product and the value is the similar product
-                        similar_asin.append({"asin":to_int(product_info["asin"]), "asin_similar":to_int(similar) })
+                        similar_asin.append({"asin":product_info["asin"], "asin_similar":to_int(similar) })
                 index_line+=1
 
             #special case: save the categories/sub categories for the prodduct, the key is (id, asin)
@@ -128,11 +140,11 @@ def describe_product(lineF, index_line):
                     
                     #get the first category 
                     main_category = category_list[0]
-                    prod_category={"asin": to_int(product_info['asin']), "id_category":main_category["id"]}
+                    prod_category = {"asin": product_info['asin'], "id_category":main_category["id"]}
                     
                     #get the subcategories
                     for category in category_list[1:]:
-                        prod_subcategory.append({"asin": to_int(product_info['asin']), 
+                        prod_subcategory.append({"asin": product_info['asin'], 
                                                  "id_category":main_category["id"], 
                                                  "id_subcategory":category["id"] })
                     
@@ -146,7 +158,7 @@ def describe_product(lineF, index_line):
             elif date := is_date(key):
                     year, month, day = date
                     comment = {
-                        "asin": to_int(product_info['asin']),
+                        "asin": product_info['asin'],
                         "year": year,
                         "month": month,
                         "day": day,
@@ -164,34 +176,48 @@ def describe_product(lineF, index_line):
             break
     
      
-    if category_list:
+    """ if category_list:
         print("--------Categories:--------")
         for i in category_list:
-            print(i)
+            print(i) """
     
-    print("\n")
+  
     # Informações adicionais
     """ print(f"inputfile pos {index_line}: {lineF[index_line-1]} and {process_line(lineF[index_line-1])}")
     if index_line < len(lineF):
         print(f"prox line: {lineF[index_line]}") """
     
-    print('PRODUCT INFO')
-    print(product_info)
-    print("MAIN CATEGORY")
-    print(prod_category)
-    print("SUBCATEGORY")
-    for i in prod_subcategory:
-        print(i)
-    print('PRODUCT SIMILAR')
-    for i in similar_asin:
-        print(i)
-    print('REVIEWS')
-    for i in reviews:
-        print(i)
+    """ if(product_info):
+        print('PRODUCT INFO')
+        print(product_info)
+    if(prod_category):
+        print("MAIN CATEGORY")
+        print(prod_category)
+    if(prod_subcategory):
+        print("SUBCATEGORY")
+        for i in prod_subcategory:
+            print(i)
+    if(similar_asin):
+        print('PRODUCT SIMILAR')
+        for i in similar_asin:
+            print(i)
+    if(reviews):
+        print('REVIEWS')
+        for i in reviews:
+            print(i) """
 
-    return index_line, product_info
+    return index_line, product_info, category_list, similar_asin, prod_category, prod_subcategory,reviews 
 
-def process_file(input_file):
+def process_file(input_file, index_line):
+    #lists for every table
+    products = []
+    categories = set() #more eficient to get unique values 
+    similars = []
+    prods_categories = []
+    prods_subcategories = []
+    prods_reviews = []
+    prod_count = 0
+    
     with open(input_file, "r") as inputF:
         linesF = inputF.readlines()
         index_line = 0
@@ -200,8 +226,63 @@ def process_file(input_file):
             line_processed = process_line(linesF[index_line])
             if line_processed:
                 if "ASIN" in line_processed[0]:
-                    describe_product(linesF, index_line)
+                    index_line, product_info, category_list, similar_asin, prod_category, prod_subcategory,reviews = describe_product(linesF, index_line)
+                    
+                    #add every return to the respective list
+                    if product_info:
+                        products.append(product_info)
+                        prod_count += 1
+
+                    for category in category_list:
+                        categories.add(tuple(category.items()))
+
+                    if similar_asin:
+                        for similar in similar_asin:
+                            similars.append(similar)
+                    
+                    if prod_category:
+                        prods_categories.append(prod_category)
+
+                    for subcategories in prod_subcategory:
+                        prods_subcategories.append(subcategories)
+
+                    if reviews:
+                        for review in reviews:
+                            prods_reviews.append(review)
+
+                    if prod_count == 4:
+                        categories_list = [dict(t) for t in categories]
+                        return index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews
+                    
             index_line +=1  
+    categories_list = [dict(t) for t in categories]
+    return index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews
 
 input_file = sys.argv[1]
-process_file(input_file)
+index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews = process_file(input_file,0)
+print("INDEX LINE: ",index_line)
+print('\n')
+print("PRODUCTS")
+for i in products:
+    print(i)
+print('\n')
+print("CATEGORIES")
+for i in categories_list:
+    print(i)
+print('\n')
+print("SIMILARS")
+for i in similars:
+    print(i)
+print('\n')
+print("MAIN_CATEGORIES")
+for i in prods_categories:
+    print(i)
+print('\n')
+print("SUBCATEGORIES")
+for i in prods_subcategories:
+    print(i)
+print('\n')
+print("REVIEWS")
+for i in prods_reviews:
+    print(i)
+
