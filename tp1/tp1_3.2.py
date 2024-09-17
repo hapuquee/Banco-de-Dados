@@ -22,8 +22,6 @@ def get_similar(word_similar):
     similar = word_similar[2:]
     return similar
 
-#OBS : mesma categoria com dois ids, precisamos tratar
-#OBS2: ver oq fica melhor como chave
 def process_categories(unpro_categories):
     categories_list = []
     seen_id = []
@@ -74,10 +72,9 @@ def to_int(value):
     return None  
 
 
-def describe_product(lineF, index_line): 
-
-    #Mapping keys to processing functions
-    processing_map = { 
+def describe_product(lineF, index_line):
+    # Mapping keys to processing functions
+    processing_map = {
         "ASIN": get_value,
         "title": get_title,
         "group": get_value,
@@ -89,147 +86,138 @@ def describe_product(lineF, index_line):
     reviews = []
     prod_category = {}
     category_list = []
-    prod_subcategory =[]
+    prod_subcategory = []
 
-    #verify if the product is discontinued
-    for i in range(index_line, min(index_line + 2, len(lineF))):
-        if "discontinued product" in lineF[i].lower():
-            #skip for the next product
-            return i + 1, {}, [], {}, [], [], []
+    # verify if the product is discontinued
+    if any("discontinued product" in lineF[i].lower() for i in range(index_line, min(index_line + 2, len(lineF)))):
+        return index_line + 1, {}, [], {}, [], [], []
 
     while index_line < len(lineF):
         #list of strings from one line
-        line_processed = process_line(lineF[index_line]) 
-        if line_processed:
-            key = line_processed[0]
-            
-            if key in processing_map:
-                #function from the map processing
-                process_function = processing_map[key] 
-                product_info[key.lower()] = process_function(line_processed)
+        line_processed = process_line(lineF[index_line])
+        if not line_processed:
+            break
+
+        key = line_processed[0]
+
+        if key in processing_map:
+            #process product information by the functions on map
+            product_info[key.lower()] = processing_map[key](line_processed)
+            index_line += 1
+
+        #case for similar: returns a list of similar asins
+        elif key == "similar":
+            #if the similar is 0, the rest of list is empthy
+            if len(line_processed[2:]) > 0:
+                similar_asin.extend({
+                    "asin": product_info["asin"],
+                    "asin_similar": to_int(similar)
+                } for similar in get_similar(line_processed))
+            index_line += 1
+
+        elif key == "categories":
+            #process categories and subcategories
+            categories_list = []
+            while index_line + 1 < len(lineF):
                 index_line += 1
+                line_category = lineF[index_line]
+                #if is not empthy or in reviews section stops
+                if not line_category or "reviews" in line_category:
+                    index_line -= 1
+                    break
+                categories_list.append(line_category)
 
-            #case for similar: the function returns two values: one for the product info (total) and one for the similar asin dic (a list with the "number" of the asin) 
-            elif key == "similar":
-                #if the categories is 0, the rest os list is empthy
-                if len(line_processed[2:])>0:
-                    for similar in get_similar(line_processed):
-                        #key is the product and the value is the similar product
-                        similar_asin.append({"asin":product_info["asin"], "asin_similar":to_int(similar) })
-                index_line+=1
+            if categories_list:
+                category_list = process_categories(categories_list)
+                #takes the first category as main category
+                main_category = category_list[0]
+                prod_category = {"asin": product_info['asin'], "id_category": main_category["id"]}
+                #save the rest as subcategory
+                prod_subcategory.extend({
+                    "asin": product_info['asin'],
+                    "id_category": main_category["id"],
+                    "id_subcategory": category["id"]
+                } for category in category_list[1:])
+            index_line += 1
 
-            #special case: save the categories/sub categories for the prodduct, the key is (id, asin)
-            elif key == "categories":
-                #list to save each line of categorie
-                categories_list = []
-                while True:
-                    index_line += 1
-                    line_categorie = lineF[index_line]
+        elif key == "reviews":
+            index_line += 1
 
-                    #if is not empthy or in review section stops
-                    if not line_categorie or ("reviews" in line_categorie):
-                        index_line -= 1
-                        break
-                    
-                    #just get each line of categorie
-                    categories_list.append(line_categorie)
+        #verify if is a data and already get the values
+        elif (date := is_date(key)):
+            # Process reviews with date
+            year, month, day = date
+            reviews.append({
+                "asin": product_info['asin'],
+                "year": year,
+                "month": month,
+                "day": day,
+                line_processed[1]: line_processed[2],
+                line_processed[3]: to_int(line_processed[4]),
+                line_processed[5]: to_int(line_processed[6]),
+                line_processed[7]: to_int(line_processed[8])
+            })
+            index_line += 1
 
-                if categories_list:
-                    #for each line of categorie, this function get the id and name of the categories and return a dic
-                    category_list = process_categories(categories_list)
-                    
-                    #get the first category 
-                    main_category = category_list[0]
-                    prod_category = {"asin": product_info['asin'], "id_category":main_category["id"]}
-                    
-                    #get the subcategories
-                    for category in category_list[1:]:
-                        prod_subcategory.append({"asin": product_info['asin'], 
-                                                 "id_category":main_category["id"], 
-                                                 "id_subcategory":category["id"] })
-                    
-
-                index_line += 1
-
-            elif key == "reviews":
-                index_line += 1
-            
-            #make the verification and already get the values
-            elif date := is_date(key):
-                    year, month, day = date
-                    comment = {
-                        "asin": product_info['asin'],
-                        "year": year,
-                        "month": month,
-                        "day": day,
-                        line_processed[1]: line_processed[2],
-                        line_processed[3]: to_int(line_processed[4]),
-                        line_processed[5]: to_int(line_processed[6]),
-                        line_processed[7]: to_int(line_processed[8])
-                    }
-                    index_line+=1
-                    reviews.append(comment)
-            
-            else:
-                break
         else:
             break
 
-    return index_line, product_info, category_list, similar_asin, prod_category, prod_subcategory,reviews 
+    return index_line, product_info, category_list, similar_asin, prod_category, prod_subcategory, reviews
 
 def process_file(input_file, index_line):
-    #lists for every table
+    #list for each table
     products = []
-    categories = set() #more eficient to get unique values 
+    categories = set() #more efficient to get unique values
     similars = []
     prods_categories = []
     prods_subcategories = []
     prods_reviews = []
     prod_count = 0
-    
+
     with open(input_file, "r") as inputF:
         linesF = inputF.readlines()
-        index_line = 0
 
-        while index_line < len(linesF):
-            line_processed = process_line(linesF[index_line])
-            if line_processed:
-                if "ASIN" in line_processed[0]:
-                    index_line, product_info, category_list, similar_asin, prod_category, prod_subcategory,reviews = describe_product(linesF, index_line)
-                    
-                    #add every return to the respective list
-                    if product_info:
-                        products.append(product_info)
-                        prod_count += 1
+    while index_line < len(linesF):
+        line_processed = process_line(linesF[index_line])
+        if not line_processed:
+            index_line += 1
+            continue
 
-                    for category in category_list:
-                        categories.add(tuple(category.items()))
+        if "ASIN" in line_processed[0]:
+            index_line, product_info, category_list, similar_asin, prod_category, prod_subcategory, reviews = describe_product(linesF, index_line)
 
-                    if similar_asin:
-                        for similar in similar_asin:
-                            similars.append(similar)
-                    
-                    if prod_category:
-                        prods_categories.append(prod_category)
-                    
-                    if prod_subcategory:
-                        for subcategories in prod_subcategory:
-                            prods_subcategories.append(subcategories)
+            #get every information of one product to their respective list
+            if product_info:
+                products.append(product_info)
+                prod_count += 1
 
-                    if reviews:
-                        for review in reviews:
-                            prods_reviews.append(review)
+            if category_list:
+                categories.update(tuple(category.items()) for category in category_list)
 
-                    if prod_count == 4:
-                        categories_list = [dict(t) for t in categories]
-                        return index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews
-                    
-            index_line +=1  
+            if similar_asin:
+                similars.extend(similar_asin)
+
+            if prod_category:
+                prods_categories.append(prod_category)
+
+            if prod_subcategory:
+                prods_subcategories.extend(prod_subcategory)
+
+            if reviews:
+                prods_reviews.extend(reviews)
+            
+            #number of products to read at time
+            if prod_count == 4:
+                categories_list = [dict(t) for t in categories]
+                return index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews
+
+        index_line += 1
+
     categories_list = [dict(t) for t in categories]
     return index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews
 
 input_file = sys.argv[1]
-index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews = process_file(input_file,0)
+index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews = process_file(input_file,12380)
 print("INDEX LINE: ",index_line)
 print('\n')
 print("PRODUCTS")
