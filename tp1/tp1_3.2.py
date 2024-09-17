@@ -174,37 +174,6 @@ def describe_product(lineF, index_line):
                 break
         else:
             break
-    
-     
-    """ if category_list:
-        print("--------Categories:--------")
-        for i in category_list:
-            print(i) """
-    
-  
-    # Informações adicionais
-    """ print(f"inputfile pos {index_line}: {lineF[index_line-1]} and {process_line(lineF[index_line-1])}")
-    if index_line < len(lineF):
-        print(f"prox line: {lineF[index_line]}") """
-    
-    """ if(product_info):
-        print('PRODUCT INFO')
-        print(product_info)
-    if(prod_category):
-        print("MAIN CATEGORY")
-        print(prod_category)
-    if(prod_subcategory):
-        print("SUBCATEGORY")
-        for i in prod_subcategory:
-            print(i)
-    if(similar_asin):
-        print('PRODUCT SIMILAR')
-        for i in similar_asin:
-            print(i)
-    if(reviews):
-        print('REVIEWS')
-        for i in reviews:
-            print(i) """
 
     return index_line, product_info, category_list, similar_asin, prod_category, prod_subcategory,reviews 
 
@@ -242,9 +211,10 @@ def process_file(input_file, index_line):
                     
                     if prod_category:
                         prods_categories.append(prod_category)
-
-                    for subcategories in prod_subcategory:
-                        prods_subcategories.append(subcategories)
+                    
+                    if prod_subcategory:
+                        for subcategories in prod_subcategory:
+                            prods_subcategories.append(subcategories)
 
                     if reviews:
                         for review in reviews:
