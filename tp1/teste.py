@@ -3,8 +3,6 @@ import re
 import bd
 import threading
 
-
-
 def process_line(line):
     parts = line.replace(':','').split()
     return parts
@@ -168,141 +166,165 @@ def describe_product(lineF, index_line):
     return index_line, tuple(product_info), category_list, similar_asin, prod_category, prod_subcategory, reviews
 
 
+def divide_file(lines):
+    
+    total_lines = len(lines)
+    if total_lines == 0:
+        print("The file is empty.")
+        return
+    
+    half_index = total_lines // 2
+    half_line_product = find_product(lines, half_index)
 
-def process_file(input_file):
-    #list for each table
-    products = []
-    categories = set() #more efficient to get unique values
-    similars = []
-    prods_categories = []
-    prods_subcategories = []
-    prods_reviews = []
+    # Process first half
+    primeiro_quartoI = find_product(lines, 0)
+    segundo_quartoF = half_line_product - 1
+    half_pm_index = (segundo_quartoF - primeiro_quartoI) // 2
+    segundo_quartoI = find_product(lines, half_pm_index)
+    primeiro_quartoF = segundo_quartoI-1
 
-    index_line = 0
+    # Process second half
+    terceiro_quartoI = half_line_product
+    quarto_quartoF = total_lines
+    half_sm_index = (quarto_quartoF - terceiro_quartoI) // 2
+    quarto_quartoI = find_product(lines, half_sm_index)
+    terceiro_quartoF = quarto_quartoI -1
 
-    with open(input_file, "r") as inputF:
-        linesF = inputF.readlines()
+    return primeiro_quartoI, primeiro_quartoF, segundo_quartoI, segundo_quartoF, terceiro_quartoI, terceiro_quartoF, quarto_quartoI, quarto_quartoF
 
-    while index_line < len(linesF):
-        line_processed = process_line(linesF[index_line])
+
+def process_file(initial, end, lines):
+    # Conjuntos para cada tipo de dado (garante unicidade)
+    products = set()
+    categories = set()
+    similars = set()
+    prods_categories = set()
+    prods_subcategories = set()
+    prods_reviews = set()
+
+    while initial < end:
+        line_processed = process_line(lines[initial])
         if not line_processed:
-            index_line += 1
+            initial += 1
             continue
 
         if "ASIN" in line_processed[0]:
-            index_line, product_info, category_list, similar_asin, prod_category, prod_subcategory, reviews = describe_product(linesF, index_line)
+            initial, product_info, category_list, similar_asin, prod_category, prod_subcategory, reviews = describe_product(lines, initial)
 
-            #get every information of one product to their respective list
+            # Armazena as informações em conjuntos
             if product_info:
-                products.append(product_info)
+                products.add(product_info)  # Adiciona produto ao conjunto
 
             if category_list:
-                categories.update(category for category in category_list)
+                categories.update(category_list)  # Atualiza o conjunto de categorias
 
             if similar_asin:
-                similars.extend(similar_asin)
+                similars.update(similar_asin)  # Atualiza o conjunto de similares
 
             if prod_category:
-                prods_categories.append(prod_category)
+                prods_categories.add(prod_category)  # Adiciona categoria principal ao conjunto
 
             if prod_subcategory:
-                prods_subcategories.extend(prod_subcategory)
+                prods_subcategories.update(prod_subcategory)  # Atualiza o conjunto de subcategorias
 
             if reviews:
-                prods_reviews.extend(reviews)
-        index_line += 1
+                prods_reviews.update(reviews)  # Atualiza o conjunto de reviews
 
-    return products, list(categories), similars, prods_categories, prods_subcategories, prods_reviews
+        initial += 1
+
+    # Retorna os conjuntos
+    return products, categories, similars, prods_categories, prods_subcategories, prods_reviews
+
+def process_file_in_thread(initial, end, lines, results, index):
+    # Executa process_file e armazena o resultado na lista 'results' na posição 'index'
+    products, categories, similars, prods_categories, prods_subcategories, prods_reviews = process_file(initial, end, lines)
+    results[index] = (products, categories, similars, prods_categories, prods_subcategories, prods_reviews)
+
+def open_file(input_file):
+    with open(input_file, "r") as inputF:
+        lines = inputF.readlines()
+
+        # Divide o arquivo em quatro partes
+        primeiro_quartoI, primeiro_quartoF, segundo_quartoI, segundo_quartoF, terceiro_quartoI, terceiro_quartoF, quarto_quartoI, quarto_quartoF = divide_file(lines)
+        
+        # Lista para armazenar os resultados de cada thread
+        results = [None] * 4
+
+        # Cria as threads, passando as partes do arquivo para cada uma
+        threads = []
+        threads.append(threading.Thread(target=process_file_in_thread, args=(primeiro_quartoI, primeiro_quartoF, lines, results, 0)))
+        threads.append(threading.Thread(target=process_file_in_thread, args=(segundo_quartoI, segundo_quartoF, lines, results, 1)))
+        threads.append(threading.Thread(target=process_file_in_thread, args=(terceiro_quartoI, terceiro_quartoF, lines, results, 2)))
+        threads.append(threading.Thread(target=process_file_in_thread, args=(quarto_quartoI, quarto_quartoF, lines, results, 3)))
+
+        # Inicia as threads
+        for thread in threads:
+            thread.start()
+
+        # Aguarda todas as threads finalizarem
+        for thread in threads:
+            thread.join()
+
+        # Combina os resultados das quatro threads
+        all_products = []
+        all_categories = set()
+        all_similars = []
+        all_prods_categories = []
+        all_prods_subcategories = []
+        all_prods_reviews = []
+
+        for result in results:
+            products, categories, similars, prods_categories, prods_subcategories, prods_reviews = result
+            all_products.extend(products)
+            all_categories.update(categories)
+            all_similars.extend(similars)
+            all_prods_categories.extend(prods_categories)
+            all_prods_subcategories.extend(prods_subcategories)
+            all_prods_reviews.extend(prods_reviews)
+
+        # Agora 'all_products', 'all_categories', etc. contém todos os dados combinados
+        print(f"PRODUCTS {len(all_products)}")
+        """ for i in all_products:
+            print(i)
+        print('\n') """
+
+        print(f"CATEGORIES {len(all_categories)}")
+        """ for i in all_categories:
+            print(i)
+        print('\n') """
+
+        print(f"SIMILARS {len(all_similars)}")
+        """ for i in all_similars:
+            print(i)
+        print('\n') """
+
+        print(f"MAIN_CATEGORIES {len(all_prods_categories)}")
+        """ for i in all_prods_categories:
+            print(i)
+        print('\n') """
+
+        print(f"SUBCATEGORIES {len(all_prods_subcategories)}")
+        """ for i in all_prods_subcategories:
+            print(i)
+        print('\n') """
+
+        print(f"REVIEWS {len(all_prods_reviews)}")
+        """ for i in all_prods_reviews:
+            print(i)
+        print('\n') """
 
 
-# Função para gerenciar as threads
-def insert_concurrently(function_names, dados_list):
-    threads = []
+def find_product(lines, index):
+    while index < len(lines):
+        if "ASIN" in lines[index]:
+            return index
+        index += 1
+    return len(lines)
 
-    # Iterar pelos nomes das funções e dados correspondentes
-    for i, function_name in enumerate(function_names):
-        # Usar getattr para obter a função do módulo bd a partir do nome
-        insert_function = getattr(bd, "insert_"+function_name)
 
-        # Criar uma thread para cada função de inserção, passando os dados correspondentes
-        thread = threading.Thread(target=insert_function, args=(dados_list[i],))
-        threads.append(thread)
-    
-    # Iniciar todas as threads
-    for thread in threads:
-        thread.start()
-
-    # Esperar que todas as threads terminem
-    for thread in threads:
-        thread.join()
 
 
 if __name__ == "__main__":
     input_file = sys.argv[1]
-
-
-
-    bd.check_and_create_db()
-    bd.create_product_table()
-    bd.create_category_table()
-    bd.create_product_category_table()
-    bd.create_review_table()
-    bd.create_similar_product_table()
-    bd.create_product_subcategory_table()
-    product, category, similar, product_category, product_subcategory, review = process_file(input_file) 
-    
-    função = ["product", "category"]
-    dados = [product, category]
-    insert_concurrently(função, dados)
-
-    função = ["similar", "product_category"]
-    dados = [similar, product_category]
-    insert_concurrently(função, dados)
-
-    função = ["product_subcategory", "review"]
-    dados = [product_subcategory, review]
-    insert_concurrently(função, dados)
-
-""" 
-    print(f"quantidade de produtos: {len(product)}")
-    print(f"quantidade de categories: {len(category)}")
-    print(f"quantidade de produtos_categoria: {len(product_category)}")
-    print(f"quantidade de similares: {len(similar)}")
-    print(f"quantidade de subcat: {len(product_subcategory)}")
-    print(f"quantidade de reviews: {len(review)}")
-     """
-"""     print("PRODUCTS")
-    for i in products:
-        print(i)
-    print('\n')
-
-    print("CATEGORIES")
-    for i in categories_list:
-        print(i)
-    print('\n')
-
-    
-    print("SIMILARS")
-    for i in similars:
-        print(i)
-    print('\n')
-
-    
-    print("MAIN_CATEGORIES")
-    for i in prods_categories:
-        print(i)
-    print('\n')
-
-    
-    print("SUBCATEGORIES")
-    for i in prods_subcategories:
-        print(i)
-    print('\n')
-
-    
-    print("REVIEWS")
-    for i in prods_reviews:
-        print(i) """
-
-
-    
+    open_file(input_file)
+   
