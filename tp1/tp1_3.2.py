@@ -7,12 +7,11 @@ def process_line(line):
 
 def get_value(word_value):
     value = word_value[1]
-    #check if is a number (asin, salesrank) and return a int
-    if value.isdigit():
-        return int(value)
-    else:
-        return value
     return value
+
+#for salesrank
+def get_int_value(word_value):
+    return int(word_value[1])
 
 def get_title(word_title):
     title = ' '.join(word_title[1:])
@@ -49,7 +48,7 @@ def process_categories(unpro_categories):
                 id = None
                 
             if (id not in seen_id) and name:
-                categories_list.append({"id": to_int(id), "name": name})
+                categories_list.append((int(id),name))
                 seen_id.append(id)
                 
             
@@ -78,10 +77,10 @@ def describe_product(lineF, index_line):
         "ASIN": get_value,
         "title": get_title,
         "group": get_value,
-        "salesrank": get_value,
+        "salesrank": get_int_value,
     }
 
-    product_info = {}
+    product_info = []
     similar_asin = []
     reviews = []
     prod_category = {}
@@ -102,17 +101,17 @@ def describe_product(lineF, index_line):
 
         if key in processing_map:
             #process product information by the functions on map
-            product_info[key.lower()] = processing_map[key](line_processed)
+            product_info.append(processing_map[key](line_processed))
             index_line += 1
 
         #case for similar: returns a list of similar asins
         elif key == "similar":
             #if the similar is 0, the rest of list is empthy
             if len(line_processed[2:]) > 0:
-                similar_asin.extend({
-                    "asin": product_info["asin"],
-                    "asin_similar": to_int(similar)
-                } for similar in get_similar(line_processed))
+                similar_asin.extend((
+                    product_info[0],
+                    similar
+                 ) for similar in get_similar(line_processed))
             index_line += 1
 
         elif key == "categories":
@@ -131,13 +130,13 @@ def describe_product(lineF, index_line):
                 category_list = process_categories(categories_list)
                 #takes the first category as main category
                 main_category = category_list[0]
-                prod_category = {"asin": product_info['asin'], "id_category": main_category["id"]}
+                prod_category = (product_info[0],main_category[0])
                 #save the rest as subcategory
-                prod_subcategory.extend({
-                    "asin": product_info['asin'],
-                    "id_category": main_category["id"],
-                    "id_subcategory": category["id"]
-                } for category in category_list[1:])
+                prod_subcategory.extend((
+                    product_info[0],
+                    main_category[0],
+                    category[0]
+                ) for category in category_list[1:])
             index_line += 1
 
         elif key == "reviews":
@@ -147,24 +146,24 @@ def describe_product(lineF, index_line):
         elif (date := is_date(key)):
             # Process reviews with date
             year, month, day = date
-            reviews.append({
-                "asin": product_info['asin'],
-                "year": year,
-                "month": month,
-                "day": day,
-                line_processed[1]: line_processed[2],
-                line_processed[3]: to_int(line_processed[4]),
-                line_processed[5]: to_int(line_processed[6]),
-                line_processed[7]: to_int(line_processed[8])
-            })
+            reviews.append((
+                product_info[0],
+                year,
+                month,
+                day,
+                line_processed[2],
+                to_int(line_processed[4]),
+                to_int(line_processed[6]),
+                to_int(line_processed[8])
+            ))
             index_line += 1
 
         else:
             break
 
-    return index_line, product_info, category_list, similar_asin, prod_category, prod_subcategory, reviews
+    return index_line, tuple(product_info), category_list, similar_asin, prod_category, prod_subcategory, reviews
 
-def process_file(input_file, index_line):
+def process_file(input_file):
     #list for each table
     products = []
     categories = set() #more efficient to get unique values
@@ -172,7 +171,8 @@ def process_file(input_file, index_line):
     prods_categories = []
     prods_subcategories = []
     prods_reviews = []
-    prod_count = 0
+
+    index_line = 0
 
     with open(input_file, "r") as inputF:
         linesF = inputF.readlines()
@@ -189,10 +189,9 @@ def process_file(input_file, index_line):
             #get every information of one product to their respective list
             if product_info:
                 products.append(product_info)
-                prod_count += 1
 
             if category_list:
-                categories.update(tuple(category.items()) for category in category_list)
+                categories.update(category for category in category_list)
 
             if similar_asin:
                 similars.extend(similar_asin)
@@ -205,21 +204,12 @@ def process_file(input_file, index_line):
 
             if reviews:
                 prods_reviews.extend(reviews)
-            
-            #number of products to read at time
-            if prod_count == 4:
-                categories_list = [dict(t) for t in categories]
-                return index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews
-
         index_line += 1
 
-    categories_list = [dict(t) for t in categories]
-    return index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews
+    return products, list(categories), similars, prods_categories, prods_subcategories, prods_reviews
 
 input_file = sys.argv[1]
-index_line, products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews = process_file(input_file,12380)
-print("INDEX LINE: ",index_line)
-print('\n')
+products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews = process_file(input_file)
 print("PRODUCTS")
 for i in products:
     print(i)
