@@ -27,11 +27,11 @@ jobs:
 
     # Passo 4: Configurar o Docker Compose
     - name: Set up Docker Compose
-      run: docker-compose --version
+      run: docker compose --version
 
     # Passo 5: Build da imagem a partir do docker-compose.yml
     - name: Build PostgreSQL Image
-      run: docker-compose -f docker-compose.yml build db
+      run: docker compose -f docker-compose.yml build db
 
     # Passo 6: Taggear a imagem
     - name: Tag Docker Image
