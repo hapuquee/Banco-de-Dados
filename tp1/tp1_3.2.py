@@ -3,8 +3,6 @@ import re
 import bd
 import threading
 
-
-
 def process_line(line):
     parts = line.replace(':','').split()
     return parts
@@ -224,10 +222,14 @@ def insert_concurrently(function_names, dados_list):
         # Usar getattr para obter a função do módulo bd a partir do nome
         insert_function = getattr(bd, "insert_"+function_name)
 
+        dados = dados_list[i]
+        tam_dados = len(dados)
         # Criar uma thread para cada função de inserção, passando os dados correspondentes
-        thread = threading.Thread(target=insert_function, args=(dados_list[i],))
+        thread = threading.Thread(target=insert_function, args=(dados[0:(tam_dados//2)],))
         threads.append(thread)
-    
+        thread = threading.Thread(target=insert_function, args=(dados[(tam_dados//2):],))
+        threads.append(thread)
+       
     # Iniciar todas as threads
     for thread in threads:
         thread.start()
@@ -239,8 +241,6 @@ def insert_concurrently(function_names, dados_list):
 
 if __name__ == "__main__":
     input_file = sys.argv[1]
-
-
 
     bd.check_and_create_db()
     bd.create_product_table()

@@ -342,13 +342,8 @@ def insert_review(dados):
 
 # Exemplo de uso das funções
 if __name__ == "__main__":
-    host = '172.17.0.2'
-    user = 'postgres'
-    password = '1234'
-    db_name = 'tp1bd'
-
     # Verificar/criar o banco de dados e conectar
-    check_and_create_db(host, user, password, db_name)
+    check_and_create_db()
     
     # Realizar operações no banco de dados
     #perform_db_operation()
