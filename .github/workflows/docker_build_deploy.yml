@@ -1,0 +1,42 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Passo 1: Fazer checkout do código
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Passo 2: Configurar Docker Buildx para builds multiplataforma
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Passo 3: Login no DockerHub
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # Passo 4: Configurar o Docker Compose
+    - name: Set up Docker Compose
+      run: docker-compose --version
+
+    # Passo 5: Build da imagem a partir do docker-compose.yml
+    - name: Build PostgreSQL Image
+      run: docker-compose -f docker-compose.yml build db
+
+    # Passo 6: Taggear a imagem
+    - name: Tag Docker Image
+      run: docker tag db_tp1 ${{ secrets.DOCKER_USERNAME }}/postgres-db:${{ github.sha }}
+
+    # Passo 7: Push da imagem para o DockerHub
+    - name: Push to DockerHub
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/postgres-db:${{ github.sha }}
