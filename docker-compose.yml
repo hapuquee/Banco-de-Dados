@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: db_tp1
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - tp1bd
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=postgres
+
+networks:
+  tp1bd:
+    driver: bridge
+    
+volumes:
+  postgres_data:

@@ -2,7 +2,7 @@ import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import execute_values
 
-host = '172.17.0.2'
+host = 'localhost'
 user = 'postgres'
 password = '1234'
 db_name = 'tp1bd'
