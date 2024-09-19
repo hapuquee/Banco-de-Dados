@@ -337,18 +337,139 @@ def insert_review(dados):
         cur.close()
         con.close()
 
+def primeira_query():
+    #Conectar ao bd
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    cur = con.cursor()
 
+    #query para inserção
+    consult_query = """
+    (SELECT COSTUMER, HELPFUL, RATING
+    FROM REVIEW
+    WHERE ASSIN = 'B00000C2CU'
+    ORDER BY HELPFUL DESC, RATING ASC LIMIT 5);
+    """
+
+    try:
+        #executar comando de inserção
+        cur.execute(consult_query)
+        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+
+        # Verificar se resultados foram retornados
+        if results:
+            print(f"results {results}")
+            for row in results:
+                print(f"COSTUMER: {row[0]}, HELPFUL: {row[1]}, RATING: {row[2]}")
+        else:
+            print("Nenhum resultado encontrado.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao inserir review: {e}")
+    finally:
+        cur.close()
+        con.close()
+
+
+def segunda_query():
+        #Conectar ao bd
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    cur = con.cursor()
+
+    #query para inserção
+    consult_query = """
+    SELECT p2.assin AS similar_assin, 
+       p2.title AS similar_title, 
+       p2.salerank AS similar_salerank
+    FROM similar_product sp
+    JOIN product p1 ON sp.assin = p1.assin
+    JOIN product p2 ON sp.assin_similar = p2.assin
+    WHERE p1.assin = 'B00000C2CU'  -- O produto original
+    AND p2.salerank < p1.salerank;  -- Comparação do salerank
+
+    """
+
+    try:
+        #executar comando de inserção
+        cur.execute(consult_query)
+        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+
+        # Verificar se resultados foram retornados
+        if results:
+            print(f"results {results}")
+            for row in results:
+                print(f"COSTUMER: {row[0]}, HELPFUL: {row[1]}, RATING: {row[2]}")
+        else:
+            print("Nenhum resultado encontrado.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao inserir review: {e}")
+    finally:
+        cur.close()
+        con.close()
+
+
+def quarta_query():
+        #Conectar ao bd
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    cur = con.cursor()
+
+    #query para inserção
+    consult_query = """
+    WITH RankedProducts AS (
+        SELECT 
+            assin,
+            title,
+            "group",
+            salerank,
+            ROW_NUMBER() OVER (PARTITION BY "group" ORDER BY salerank) AS rank
+        FROM 
+            product
+    )
+
+    SELECT 
+        assin,
+        title,
+        "group",
+        salerank
+    FROM 
+        RankedProducts
+    WHERE 
+        rank <= 10
+    ORDER BY 
+        "group", rank;
+
+
+    """
+
+    try:
+        #executar comando de inserção
+        cur.execute(consult_query)
+        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+
+        # Verificar se resultados foram retornados
+        if results:
+            print(f"results {results}")
+            for row in results:
+                print(f"COSTUMER: {row[0]}, HELPFUL: {row[1]}, RATING: {row[2]}")
+        else:
+            print("Nenhum resultado encontrado.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao inserir review: {e}")
+    finally:
+        cur.close()
+        con.close()
 
 
 # Exemplo de uso das funções
 if __name__ == "__main__":
     # Verificar/criar o banco de dados e conectar
-    check_and_create_db()
+    #check_and_create_db()
     
     # Realizar operações no banco de dados
     #perform_db_operation()
 
-    create_product_table()
+    """ create_product_table()
     create_product_category_table()
     create_category_table()
     create_similar_product_table()
@@ -359,5 +480,6 @@ if __name__ == "__main__":
         (2019, 'resenha top', 'gatinha',5),
         (2024, 'draconildo', 'cachorro', 100),
     ]
-    insert_product(dados)
+    insert_product(dados) """
+
     

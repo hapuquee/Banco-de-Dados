@@ -13,7 +13,11 @@ def get_value(word_value):
 
 #for salesrank
 def get_int_value(word_value):
-    return int(word_value[1])
+    int_n = int(word_value[1])
+    if int_n<=0:
+        int_n=9798351
+    else:
+        return int_n
 
 def get_title(word_title):
     title = ' '.join(word_title[1:])
