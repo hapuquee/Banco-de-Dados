@@ -2,6 +2,10 @@ import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import execute_values
 
+host = '172.17.0.2'
+user = 'postgres'
+password = '1234'
+db_name = 'tp1bd'
 
 # Função para conectar a um banco de dados específico
 def connect_to_db(host, user, password, dbname):
@@ -16,8 +20,8 @@ def create_product_table():
     # SQL para criar a tabela
     create_table_query = """
     CREATE TABLE product (
-        assin INTEGER PRIMARY KEY,
-        title VARCHAR(200),
+        assin VARCHAR (20) PRIMARY KEY,
+        title VARCHAR(500),
         "group" VARCHAR(50),
         salerank INTEGER
     );
@@ -26,36 +30,9 @@ def create_product_table():
     try:
         # Executar o comando SQL
         cur.execute(create_table_query)
-        print("Tabela 'product' criada com sucesso.")
+        #print("Tabela 'product' criada com sucesso.")
     except Exception as e:
         print(f"Ocorreu um erro: {e}")
-    finally:
-        # Fechar o cursor
-        cur.close()
-        con.close()
-
-def create_product_category_table():
-    con = connect_to_db(host, user, password, db_name)
-    con.autocommit = True
-    # Abrir um cursor para realizar operações no banco de dados
-    cur = con.cursor()
-
-    # SQL para criar a tabela product_category
-    create_table_query = """
-    CREATE TABLE product_category (
-        assin INTEGER,
-        id_category INTEGER,
-        PRIMARY KEY (assin, id_category),
-        FOREIGN KEY (assin) REFERENCES product(assin)
-    );
-    """
-    
-    try:
-        # Executar o comando SQL para criar a tabela
-        cur.execute(create_table_query)
-        print("Tabela 'product_category' criada com sucesso.")
-    except Exception as e:
-        print(f"Ocorreu um erro ao criar a tabela 'product_category': {e}")
     finally:
         # Fechar o cursor
         cur.close()
@@ -70,7 +47,7 @@ def create_category_table():
     # SQL para criar a tabela category
     create_table_query = """
     CREATE TABLE category (
-        id SERIAL PRIMARY KEY,
+        category_key INTEGER PRIMARY KEY,
         name VARCHAR(60) NOT NULL
     );
     """
@@ -78,13 +55,44 @@ def create_category_table():
     try:
         # Executar o comando SQL para criar a tabela
         cur.execute(create_table_query)
-        print("Tabela 'category' criada com sucesso.")
+        #print("Tabela 'category' criada com sucesso.")
     except Exception as e:
         print(f"Ocorreu um erro ao criar a tabela 'category': {e}")
     finally:
         # Fechar o cursor
         cur.close()
         con.close()
+ 
+
+def create_product_category_table():
+    con = connect_to_db(host, user, password, db_name)
+    con.autocommit = True
+    # Abrir um cursor para realizar operações no banco de dados
+    cur = con.cursor()
+
+    # SQL para criar a tabela product_category
+    create_table_query = """
+    CREATE TABLE product_category (
+        assin VARCHAR(20),
+        id_category INTEGER,
+        PRIMARY KEY (assin, id_category),
+        FOREIGN KEY (assin) REFERENCES product(assin),
+        FOREIGN KEY (id_category) REFERENCES category(category_key)
+
+    );
+    """
+    
+    try:
+        # Executar o comando SQL para criar a tabela
+        cur.execute(create_table_query)
+        #print("Tabela 'product_category' criada com sucesso.")
+    except Exception as e:
+        print(f"Ocorreu um erro ao criar a tabela 'product_category': {e}")
+    finally:
+        # Fechar o cursor
+        cur.close()
+        con.close()
+
 
 def create_similar_product_table():
     con = connect_to_db(host, user, password, db_name)
@@ -95,8 +103,8 @@ def create_similar_product_table():
     # SQL para criar a tabela similar
     create_table_query = """
     CREATE TABLE similar_product (
-        assin INTEGER,
-        assin_similar INTEGER,
+        assin VARCHAR(20),
+        assin_similar VARCHAR(20),
         PRIMARY KEY (assin, assin_similar),
         FOREIGN KEY (assin) REFERENCES product(assin)
     );
@@ -105,7 +113,6 @@ def create_similar_product_table():
     try:
         # Executar o comando SQL para criar a tabela
         cur.execute(create_table_query)
-        print("Tabela 'similar_product' criada com sucesso.")
     except Exception as e:
         print(f"Ocorreu um erro ao criar a tabela 'similar_product': {e}")
     finally:
@@ -122,19 +129,18 @@ def create_product_subcategory_table():
     # SQL para criar a tabela product_subcategory
     create_table_query = """
     CREATE TABLE product_subcategory (
-        assin INTEGER,
+        assin VARCHAR(20),
         id_category INTEGER,
         subcategory INTEGER,
         PRIMARY KEY (assin, id_category, subcategory),
         FOREIGN KEY (assin, id_category) REFERENCES product_category(assin, id_category),
-        FOREIGN KEY (subcategory) REFERENCES category(id)
+        FOREIGN KEY (subcategory) REFERENCES category(category_key )
     );
     """
     
     try:
         # Executar o comando SQL para criar a tabela
         cur.execute(create_table_query)
-        print("Tabela 'product_subcategory' criada com sucesso.")
     except Exception as e:
         print(f"Ocorreu um erro ao criar a tabela 'product_subcategory': {e}")
     finally:
@@ -152,11 +158,11 @@ def create_review_table():
     create_table_query = """
     CREATE TABLE review (
         id SERIAL PRIMARY KEY,
-        assin INTEGER,
-        costumer VARCHAR(20),
+        assin VARCHAR(20),
         ano INTEGER,
         mes INTEGER,
         dia INTEGER,
+        costumer VARCHAR(20),
         rating INTEGER,
         votes INTEGER,
         helpful INTEGER,
@@ -167,7 +173,6 @@ def create_review_table():
     try:
         # Executar o comando SQL para criar a tabela
         cur.execute(create_table_query)
-        print("Tabela 'review' criada com sucesso.")
     except Exception as e:
         print(f"Ocorreu um erro ao criar a tabela 'review': {e}")
     finally:
@@ -175,7 +180,7 @@ def create_review_table():
         cur.close()
         con.close()
 
-def check_and_create_db(host, user, password, db_name):
+def check_and_create_db():
     con = connect_to_db(host, user, password, 'postgres')  # Conectar ao banco 'postgres'
     con.autocommit = True
     cur = con.cursor()
@@ -214,7 +219,7 @@ def insert_product(dados):
     try:
         # Executar o comando de inserção
         execute_values(cur, insert_query, dados)
-        print("Produto inserido com sucesso.")
+        #print("Produto inserido com sucesso.")
     except Exception as e:
         print(f"Ocorreu um erro ao inserir o produto: {e}")
     finally:
@@ -237,7 +242,7 @@ def insert_product_category(dados):
     try:
         #executar comando de inserção
         execute_values(cur, insert_query, dados)
-        print("Product_category inserido com sucesso")
+        #print("Product_category inserido com sucesso")
     except Exception as e:
         print(f"Ocorreu um erro ao inserir product_category: {e}")
     finally:
@@ -252,14 +257,14 @@ def insert_category(dados):
 
     #query para inserção
     insert_query = """
-    INSERT INTO category (name)
+    INSERT INTO category (category_key, name)
     VALUES %s;
     """
 
     try:
         #executar comando de inserção
         execute_values(cur, insert_query, dados)
-        print("Category inserido com sucesso")
+        #print("Category inserido com sucesso")
     except Exception as e:
         print(f"Ocorreu um erro ao inserir category: {e}")
     finally:
@@ -281,7 +286,7 @@ def insert_similar(dados):
     try:
         #executar comando de inserção
         execute_values(cur, insert_query, dados)
-        print("Similar inserido com sucesso")
+        #print("Similar inserido com sucesso")
     except Exception as e:
         print(f"Ocorreu um erro ao inserir Similar: {e}")
     finally:
@@ -303,7 +308,7 @@ def insert_product_subcategory(dados):
     try:
         #executar comando de inserção
         execute_values(cur, insert_query, dados)
-        print("Product_subcategory inserido com sucesso")
+        #print("Product_subcategory inserido com sucesso")
     except Exception as e:
         print(f"Ocorreu um erro ao inserir product_subcategory: {e}")
     finally:
@@ -318,19 +323,21 @@ def insert_review(dados):
 
     #query para inserção
     insert_query = """
-    INSERT INTO review (assin, costumer, ano, mes, dia, rating, votes, helpful)
+    INSERT INTO review (assin, ano, mes, dia, costumer, rating, votes, helpful)
     VALUES %s;
     """
 
     try:
         #executar comando de inserção
         execute_values(cur, insert_query, dados)
-        print("Review inserido com sucesso")
+        #print("Review inserido com sucesso")
     except Exception as e:
         print(f"Ocorreu um erro ao inserir review: {e}")
     finally:
         cur.close()
         con.close()
+
+
 
 
 # Exemplo de uso das funções

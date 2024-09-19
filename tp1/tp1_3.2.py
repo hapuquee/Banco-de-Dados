@@ -1,5 +1,9 @@
 import sys
 import re
+import bd
+import threading
+
+
 
 def process_line(line):
     parts = line.replace(':','').split()
@@ -7,7 +11,7 @@ def process_line(line):
 
 def get_value(word_value):
     value = word_value[1]
-    return value
+    return str(value)
 
 #for salesrank
 def get_int_value(word_value):
@@ -163,6 +167,8 @@ def describe_product(lineF, index_line):
 
     return index_line, tuple(product_info), category_list, similar_asin, prod_category, prod_subcategory, reviews
 
+
+
 def process_file(input_file):
     #list for each table
     products = []
@@ -208,29 +214,95 @@ def process_file(input_file):
 
     return products, list(categories), similars, prods_categories, prods_subcategories, prods_reviews
 
-input_file = sys.argv[1]
-products, categories_list, similars, prods_categories, prods_subcategories, prods_reviews = process_file(input_file)
-print("PRODUCTS")
-for i in products:
-    print(i)
-print('\n')
-print("CATEGORIES")
-for i in categories_list:
-    print(i)
-print('\n')
-print("SIMILARS")
-for i in similars:
-    print(i)
-print('\n')
-print("MAIN_CATEGORIES")
-for i in prods_categories:
-    print(i)
-print('\n')
-print("SUBCATEGORIES")
-for i in prods_subcategories:
-    print(i)
-print('\n')
-print("REVIEWS")
-for i in prods_reviews:
-    print(i)
 
+# Função para gerenciar as threads
+def insert_concurrently(function_names, dados_list):
+    threads = []
+
+    # Iterar pelos nomes das funções e dados correspondentes
+    for i, function_name in enumerate(function_names):
+        # Usar getattr para obter a função do módulo bd a partir do nome
+        insert_function = getattr(bd, "insert_"+function_name)
+
+        # Criar uma thread para cada função de inserção, passando os dados correspondentes
+        thread = threading.Thread(target=insert_function, args=(dados_list[i],))
+        threads.append(thread)
+    
+    # Iniciar todas as threads
+    for thread in threads:
+        thread.start()
+
+    # Esperar que todas as threads terminem
+    for thread in threads:
+        thread.join()
+
+
+if __name__ == "__main__":
+    input_file = sys.argv[1]
+
+
+
+    bd.check_and_create_db()
+    bd.create_product_table()
+    bd.create_category_table()
+    bd.create_product_category_table()
+    bd.create_review_table()
+    bd.create_similar_product_table()
+    bd.create_product_subcategory_table()
+    product, category, similar, product_category, product_subcategory, review = process_file(input_file) 
+    
+    função = ["product", "category"]
+    dados = [product, category]
+    insert_concurrently(função, dados)
+
+    função = ["similar", "product_category"]
+    dados = [similar, product_category]
+    insert_concurrently(função, dados)
+
+    função = ["product_subcategory", "review"]
+    dados = [product_subcategory, review]
+    insert_concurrently(função, dados)
+
+""" 
+    print(f"quantidade de produtos: {len(product)}")
+    print(f"quantidade de categories: {len(category)}")
+    print(f"quantidade de produtos_categoria: {len(product_category)}")
+    print(f"quantidade de similares: {len(similar)}")
+    print(f"quantidade de subcat: {len(product_subcategory)}")
+    print(f"quantidade de reviews: {len(review)}")
+     """
+"""     print("PRODUCTS")
+    for i in products:
+        print(i)
+    print('\n')
+
+    print("CATEGORIES")
+    for i in categories_list:
+        print(i)
+    print('\n')
+
+    
+    print("SIMILARS")
+    for i in similars:
+        print(i)
+    print('\n')
+
+    
+    print("MAIN_CATEGORIES")
+    for i in prods_categories:
+        print(i)
+    print('\n')
+
+    
+    print("SUBCATEGORIES")
+    for i in prods_subcategories:
+        print(i)
+    print('\n')
+
+    
+    print("REVIEWS")
+    for i in prods_reviews:
+        print(i) """
+
+
+    
