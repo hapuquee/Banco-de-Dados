@@ -35,8 +35,8 @@ jobs:
 
     # Passo 6: Taggear a imagem
     - name: Tag Docker Image
-      run: docker tag db_tp1 ${{ secrets.DOCKER_USERNAME }}/postgres-db:${{ github.sha }}
+      run: docker tag db_tp1 elieleli/postgres-db:${{ github.sha }}
 
     # Passo 7: Push da imagem para o DockerHub
     - name: Push to DockerHub
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/postgres-db:${{ github.sha }}
+      run: docker push elieleli/postgres-db:${{ github.sha }}
