@@ -70,8 +70,7 @@ def process_categories(unpro_categories):
 
 def is_date(string_date): 
     if re.match(r'^\d{4}-\d{1,2}-\d{1,2}$', string_date): # 'YYYY-M-D' date format, with 4 dig. year, 1-2 dig. month, and 1-2 digs. day.
-        year, month, day = map(int, string_date.split('-'))
-        return year, month, day
+        return string_date
     else:
         return None
 
@@ -159,12 +158,9 @@ def describe_product(lineF, index_line):
         #verify if is a data and already get the values
         elif (date := is_date(key)):
             # Process reviews with date
-            year, month, day = date
             reviews.append((
                 product_info[0],
-                year,
-                month,
-                day,
+                date,
                 line_processed[2],
                 to_int(line_processed[4]),
                 to_int(line_processed[6]),
@@ -375,6 +371,7 @@ def create_review_table():
     create_table_query = """
     CREATE TABLE review (
         id SERIAL PRIMARY KEY,
+        assin VARCHAR(20),
         data DATE,
         costumer VARCHAR(20),
         rating INTEGER,
@@ -537,7 +534,7 @@ def insert_review(dados):
 
     #query para inserção
     insert_query = """
-    INSERT INTO review (assin, ano, mes, dia, costumer, rating, votes, helpful)
+    INSERT INTO review (assin, data, costumer, rating, votes, helpful)
     VALUES %s;
     """
 
