@@ -1,6 +1,8 @@
-# Nome do Projeto
+# Trabalho prático 1 BD
 
-Uma breve descrição sobre o que o projeto faz e quais problemas ele resolve.
+## Participantes
+Ricardo Eliel Xavier da Silva 22250556
+Karen Hapuque Ferreira Ponce de Leão 
 
 ## Sumário
 
