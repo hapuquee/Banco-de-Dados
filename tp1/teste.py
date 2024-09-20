@@ -142,7 +142,7 @@ def option_4(cur):
     # Query para listar os 10 produtos líderes de venda em cada grupo de produtos
     cur.execute(consult_query)
     columns = ['Assin', 'Title', 'Group', 'Salerank']
-
+    data = cur.fetchall()
     # Criar um DataFrame usando pandas para definir as colunas
     df = pd.DataFrame(data, columns=columns)
     st.table(df)
@@ -164,6 +164,7 @@ def option_5(cur):
     """
     # Query para listar os 10 produtos com maior média de avaliações úteis positivas
     cur.execute(consult_query)
+    data = cur.fetchall()
     columns = ['Product Title', 'Avg Helpful Reviews']
 
     # Criar um DataFrame usando pandas para definir as colunas
