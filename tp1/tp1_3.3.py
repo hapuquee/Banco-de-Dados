@@ -1,128 +1,118 @@
 from bd import connect_to_db
+from tabulate import tabulate
+
 
 host = 'localhost'
 user = 'postgres'
 password = '1234'
 db_name = 'tp1bd'
 
-def option_1(cur):
-    #query para inserção
-    #Menor avaliação
+def option_1(cur, assin):
+    # Query para menor avaliação e mais útil
     consult_query = """
-    (SELECT COSTUMER, HELPFUL, RATING
+    SELECT COSTUMER, HELPFUL, RATING 
     FROM REVIEW
-    WHERE ASSIN = '0670672238'
-    ORDER BY HELPFUL DESC, RATING ASC LIMIT 5);
+    WHERE ASSIN = %s AND HELPFUL > 0
+    ORDER BY RATING ASC, HELPFUL DESC
+    LIMIT 5; --pegar menos rating e mais helpful
     """
 
     try:
-        #executar comando de inserção
-        cur.execute(consult_query)
-        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+        # Executar comando de consulta com parâmetro
+        cur.execute(consult_query, (assin,))
+        results = cur.fetchall()
 
         # Verificar se resultados foram retornados
         if results:
-            print(f"results {results}")
-            for row in results:
-                print(f"COSTUMER: {row[0]}, HELPFUL: {row[1]}, RATING: {row[2]}")
+            # Exibir os resultados com tabulate
+            print("Menor avaliação e mais útil:")
+            headers = ["Customer", "Helpful", "Rating"]
+            print(tabulate(results, headers=headers, tablefmt="grid"))
         else:
-            print("Nenhum resultado encontrado.")
+            print("Nenhum resultado encontrado para menor avaliação.")
     except Exception as e:
-        print(f"Ocorreu um erro ao inserir review: {e}")
+        print(f"Ocorreu um erro ao consultar os reviews: {e}")
 
+    # Query para mais útil e maior avaliação
     consult_query = """
-    (SELECT COSTUMER, HELPFUL, RATING
+    SELECT COSTUMER, HELPFUL, RATING 
     FROM REVIEW
-    WHERE ASSIN = 'B00000C2CU'
-    ORDER BY HELPFUL DESC, RATING DESC LIMIT 5);
+    WHERE ASSIN = %s AND HELPFUL > 0
+    ORDER BY HELPFUL DESC, RATING DESC
+    LIMIT 5; --pegar mais helpful e mais rating
     """
 
     try:
-        #executar comando de inserção
-        cur.execute(consult_query)
-        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+        # Executar comando de consulta com parâmetro
+        cur.execute(consult_query, (assin,))
+        results = cur.fetchall()
 
         # Verificar se resultados foram retornados
         if results:
-            print(f"results {results}")
-            for row in results:
-                print(f"COSTUMER: {row[0]}, HELPFUL: {row[1]}, RATING: {row[2]}")
+            # Exibir os resultados com tabulate
+            print("\nMais útil e maior avaliação:")
+            headers = ["Customer", "Helpful", "Rating"]
+            print(tabulate(results, headers=headers, tablefmt="grid"))
         else:
-            print("Nenhum resultado encontrado.")
-    
+            print("Nenhum resultado encontrado para mais útil e maior avaliação.")
     except Exception as e:
-        print(f"Ocorreu um erro ao inserir review: {e}")
+        print(f"Ocorreu um erro ao consultar os reviews: {e}")
 
-
-
-def option_2(cur):
-    #query para inserção
+def option_2(cur, assin):
+    # Query para produtos similares com menor salerank
     consult_query = """
     SELECT p2.assin AS similar_assin, 
-       p2.title AS similar_title, 
-       p2.salerank AS similar_salerank
+           p2.title AS similar_title, 
+           p2.salerank AS similar_salerank
     FROM similar_product sp
     JOIN product p1 ON sp.assin = p1.assin
     JOIN product p2 ON sp.assin_similar = p2.assin
-    WHERE p1.assin = '1559362022'  -- O produto original
+    WHERE p1.assin = %s  -- O produto original
     AND p2.salerank < p1.salerank;  -- Comparação do salerank
-
     """
 
     try:
-        #executar comando de inserção
-        cur.execute(consult_query)
-        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+        # Executar comando de consulta com parâmetro
+        cur.execute(consult_query, (assin,))
+        results = cur.fetchall()
 
         # Verificar se resultados foram retornados
         if results:
-            print(f"results {results}")
-            print("| similar_assin | similar_title | similar_salerank |")
-            print("|---------------|---------------|------------------|")
-            for row in results:
-                similar_assin, similar_title, similar_salerank = row
-                print(f"| {similar_assin} | {similar_title} | {similar_salerank} |")
+            # Exibir os resultados com tabulate
+            headers = ["Similar ASSIN", "Similar Title", "Similar SaleRank"]
+            print(tabulate(results, headers=headers, tablefmt="grid"))
         else:
-            print("Nenhum resultado encontrado.")
+            print("Nenhum produto similar encontrado.")
     except Exception as e:
-        print(f"Ocorreu um erro ao inserir review: {e}")
+        print(f"Ocorreu um erro ao consultar produtos similares: {e}")
 
-
-def option_3(cur):
-    #query para inserção
+def option_3(cur, assin):
+    # Query para calcular a média de avaliação ao longo do tempo
     consult_query = """
-        SELECT 
-            DATE(r.ano || '-' || r.mes || '-' || r.dia) AS review_date,
-            AVG(r.rating) AS avg_daily_rating
-        FROM 
-            review r
-        WHERE 
-            r.assin = '1559362022'
-        GROUP BY 
-            review_date
-        ORDER BY 
-            review_date ASC;
+        SELECT DATA, ROUND(AVG(RATING), 1) AS MEDIA
+        FROM REVIEW
+        WHERE ASSIN = %s
+        GROUP BY DATA; -- EVOLUÇÃO
     """
 
     try:
-        #executar comando de inserção
-        cur.execute(consult_query)
-        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+        # Executar comando de consulta com o parâmetro assin
+        cur.execute(consult_query, (assin,))
+        results = cur.fetchall()
 
         # Verificar se resultados foram retornados
         if results:
-            print(f"results {results}")
-            for row in results:
-                date, avg= row
-                print(f"| {date} | {avg}")
+            # Exibir os resultados com tabulate
+            headers = ["Date", "Average Rating"]
+            print(tabulate(results, headers=headers, tablefmt="grid"))
         else:
             print("Nenhum resultado encontrado.")
     except Exception as e:
-        print(f"Ocorreu um erro ao inserir review: {e}")
+        print(f"Ocorreu um erro ao consultar a média de avaliações: {e}")
 
 
 def option_4(cur):
-    #query para inserção
+    # Query para pegar os 10 produtos com melhor rank por grupo
     consult_query = """
     WITH RankedProducts AS (
         SELECT 
@@ -134,7 +124,6 @@ def option_4(cur):
         FROM 
             product
     )
-
     SELECT 
         assin,
         title,
@@ -146,29 +135,26 @@ def option_4(cur):
         rank <= 10
     ORDER BY 
         "group", rank;
-
-
     """
 
     try:
-        #executar comando de inserção
+        # Executar comando de consulta
         cur.execute(consult_query)
-        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+        results = cur.fetchall()
 
         # Verificar se resultados foram retornados
         if results:
-            print(f"results {results}")
-            for row in results:
-                assin, title, group, salerank = row
-                print(f"| {assin} | {title} | {group} | {salerank} |")
+            # Exibir os resultados com tabulate
+            headers = ["ASSIN", "Title", "Group", "SaleRank"]
+            print(tabulate(results, headers=headers, tablefmt="grid"))
         else:
             print("Nenhum resultado encontrado.")
     except Exception as e:
-        print(f"Ocorreu um erro ao inserir review: {e}")
+        print(f"Ocorreu um erro ao consultar produtos: {e}")
 
 
 def option_5(cur):
-    #query para inserção
+    # Query para os 10 produtos com a maior média de avaliações úteis
     consult_query = """
         SELECT 
             p.title AS product_title, 
@@ -185,28 +171,27 @@ def option_5(cur):
     """
 
     try:
-        #executar comando de inserção
+        # Executar comando de consulta
         cur.execute(consult_query)
-        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+        results = cur.fetchall()
 
         # Verificar se resultados foram retornados
         if results:
-            print(f"results {results}")
-            for row in results:
-                tittle, avg = row
-                print(f"| {tittle} | {avg} ")
+            # Exibir os resultados com tabulate
+            headers = ["Product Title", "Avg Helpful Reviews"]
+            print(tabulate(results, headers=headers, tablefmt="grid"))
         else:
             print("Nenhum resultado encontrado.")
     except Exception as e:
-        print(f"Ocorreu um erro ao inserir review: {e}")
+        print(f"Ocorreu um erro ao consultar as avaliações: {e}")
 
 
 def option_6(cur):
-    #query para inserção
+    # Query para as 5 categorias com maior média de avaliações úteis
     consult_query = """
         SELECT 
-        c.name AS category_name,
-        AVG(r.helpful) AS avg_helpful_reviews
+            c.name AS category_name,
+            AVG(r.helpful) AS avg_helpful_reviews
         FROM 
             review r
         JOIN 
@@ -221,55 +206,60 @@ def option_6(cur):
     """
 
     try:
-        #executar comando de inserção
+        # Executar comando de consulta
         cur.execute(consult_query)
-        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+        results = cur.fetchall()
 
         # Verificar se resultados foram retornados
         if results:
-            print(f"results {results}")
-            for row in results:
-                category, avg = row
-                print(f"| {category} | {avg} ")
+            # Exibir os resultados com tabulate
+            headers = ["Category Name", "Avg Helpful Reviews"]
+            print(tabulate(results, headers=headers, tablefmt="grid"))
         else:
             print("Nenhum resultado encontrado.")
     except Exception as e:
-        print(f"Ocorreu um erro ao inserir review: {e}")
+        print(f"Ocorreu um erro ao consultar as categorias: {e}")
 
 
 def option_7(cur):
-    consult_query = """
-        SELECT 
-            p."group", 
-            r.costumer, 
-            COUNT(r.id) AS total_reviews
-        FROM 
-            review r
-        JOIN 
-            product p ON r.assin = p.assin
-        GROUP BY 
-            p."group", r.costumer
-        ORDER BY 
-            total_reviews DESC
-        LIMIT 10;
+    # Passo 1: Obter todos os grupos distintos
+    distinct_groups_query = """
+        SELECT DISTINCT "group"
+        FROM product;
     """
+
     try:
-        #executar comando de inserção
-        cur.execute(consult_query)
-        results = cur.fetchall()  # Use fetchone() se você espera apenas uma linha
+        cur.execute(distinct_groups_query)
+        distinct_groups = cur.fetchall()
 
-        # Verificar se resultados foram retornados
-        if results:
-            print(f"results {results}")
-            for row in results:
-                group, costumer, total_reviews = row
-                print(f'{group} | {costumer} | {total_reviews}')
-           
+        if distinct_groups:
+            for group_row in distinct_groups:
+                group = group_row[0]
+                print(f"\nResultados para o grupo: {group}")
+                
+                # Passo 2: Executar a consulta para cada grupo distinto
+                consult_query = """
+                    SELECT COSTUMER, COUNT(*) AS APARICAO
+                    FROM REVIEW, (SELECT assin FROM product 
+                                    WHERE "group" = %s) AS PROD
+                    WHERE REVIEW.ASSIN = PROD.ASSIN
+                    GROUP BY COSTUMER
+                    ORDER BY APARICAO DESC
+                    LIMIT 10;
+                """
+                cur.execute(consult_query, (group,))
+                results = cur.fetchall()
+
+                # Exibir resultados formatados
+                if results:
+                    headers = ["Customer", "Appearances"]
+                    print(tabulate(results, headers=headers, tablefmt="grid"))
+                else:
+                    print(f"Nenhum resultado encontrado para o grupo {group}.")
         else:
-            print("Nenhum resultado encontrado.")
+            print("Nenhum grupo distinto encontrado.")
     except Exception as e:
-        print(f"Ocorreu um erro ao inserir review: {e}")
-
+        print(f"Ocorreu um erro ao consultar os dados: {e}")
 
 
 if __name__ == '__main__':
@@ -288,25 +278,37 @@ if __name__ == '__main__':
         print("7 - Listar os 10 clientes que mais fizeram comentários por grupo de produto")
         print("0 - Fechar Progama")
         option = int(input("Selecione uma das Opções:"))
-        print("\n")
 
         match option:
             case 0:
                 condition =False
             case 1:
-                option_1(cur)
+                print(f"qual o nome do grupo?")
+                grupo = str(input())
+                option_1(cur,grupo)
+                print("\n\n")
             case 2:
-                option_2(cur)
+                print(f"qual o nome do grupo?")
+                grupo = str(input())
+                option_2(cur, grupo)
+                print("\n\n")
             case 3:
-                option_3(cur)
+                print(f"qual o nome do grupo?")
+                grupo = str(input())
+                option_3(cur, grupo)
+                print("\n\n")
             case 4:
                 option_4(cur)
+                print("\n\n")
             case 5:
                 option_5(cur)
+                print("\n\n")
             case 6:
                 option_6(cur)
+                print("\n\n")
             case 7:
                 option_7(cur)
+                print("\n\n")
             case _:
                 print("Opção inválida, escolhe uma opção válida")
                 print("\n")
