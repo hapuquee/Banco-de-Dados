@@ -24,3 +24,16 @@ SELECT DATA, ROUND(AVG(RATING),1) AS MEDIA
 FROM REVIEW
 WHERE ASSIN = 'B00005O06B'
 GROUP BY DATA; --EVOLUÇÃO
+
+
+WITH RankedReviews AS (SELECT P."group", R.assin, COUNT (R.ID) AS TotalReviews, ROW_NUMBER() OVER (PARTITION BY P."group" ORDER BY COUNT (R.ID) DESC) AS rank
+    FROM Review R
+    JOIN PRODUCT P ON R.ASSIN = P.ASSIN
+    GROUP BY P."group", R.assin
+)
+
+SELECT "group", ASSIN, TotalReviews
+FROM RankedReviews
+WHERE rank <= 10
+ORDER BY "group", TotalReviews
+;
