@@ -159,9 +159,7 @@ def create_review_table():
     CREATE TABLE review (
         id SERIAL PRIMARY KEY,
         assin VARCHAR(20),
-        ano INTEGER,
-        mes INTEGER,
-        dia INTEGER,
+        data DATE,
         costumer VARCHAR(20),
         rating INTEGER,
         votes INTEGER,
@@ -338,22 +336,16 @@ def insert_review(dados):
         con.close()
 
 
-
-
 # Exemplo de uso das funções
 if __name__ == "__main__":
-    host = 'localhost'
-    user = 'postgres'
-    password = '1234' 
-    db_name = 'tp1bd'
 
     # Verificar/criar o banco de dados e conectar
-    check_and_create_db(host, user, password, db_name)
+    #check_and_create_db()
     
     # Realizar operações no banco de dados
     #perform_db_operation()
 
-    create_product_table()
+    """ create_product_table()
     create_product_category_table()
     create_category_table()
     create_similar_product_table()
@@ -364,5 +356,6 @@ if __name__ == "__main__":
         (2019, 'resenha top', 'gatinha',5),
         (2024, 'draconildo', 'cachorro', 100),
     ]
-    insert_product(dados)
+    insert_product(dados) """
+
     
