@@ -375,10 +375,7 @@ def create_review_table():
     create_table_query = """
     CREATE TABLE review (
         id SERIAL PRIMARY KEY,
-        assin VARCHAR(20),
-        ano INTEGER,
-        mes INTEGER,
-        dia INTEGER,
+        data DATE,
         costumer VARCHAR(20),
         rating INTEGER,
         votes INTEGER,
