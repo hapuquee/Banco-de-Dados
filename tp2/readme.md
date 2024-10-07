@@ -1,4 +1,4 @@
-# Trabalho prático 1 BD
+# Trabalho prático 2 BD
 
 ## Participantes
 Ricardo Eliel Xavier da Silva 22250556  
