@@ -4,15 +4,16 @@ Este projeto implementa um parser para processar arquivos CSV contendo dados de 
 
 ## Estrutura de Diretórios
 
-tp2/
-├── Parser/
-    ├── parser.cpp # Código-fonte do parser 
-    ├── artigo.csv # Exemplo de arquivo CSV  
-    ├── parser # Executável gerado pelo Makefile  
-    └── README.md # Este arquivo de instruções 
-└── Registro/ 
-    ├── registro.cpp # Código-fonte do módulo Registro 
-    ├── registro.hpp # Arquivo de cabeçalho para o Registro
+tp2/  
+├── Parser/  
+    ├── parser.cpp # Código-fonte do parser  
+    ├── artigo.csv # Exemplo de arquivo CSV    
+    ├── parser # Executável gerado pelo Makefile   
+    └── README.md # Este arquivo de instruções  
+└── Registro/  
+    ├── registro.cpp # Código-fonte do módulo Registro  
+    ├── registro.hpp # Arquivo de cabeçalho para o Registro  
+
 
 
 ## Pré-requisitos
@@ -33,19 +34,19 @@ Siga as instruções abaixo para compilar o projeto usando `make`.
 
 2. **Compile o projeto usando o make**
 
-    ``bash
+    ```bash
     make
 
 3. **Execute chamando o "parser"**
     
-    ``bash
+    ```bash
     ./parser
 
 4. **Insira o nome do csv desejado**
 
 5. **Caso queira limpar os arquivos compilados utilize o make clean**
 
-    ``bash
+    ```bash
     make clean
 
 ## Observações
