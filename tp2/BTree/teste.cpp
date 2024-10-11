@@ -1,10 +1,10 @@
 
-#include "block_size.h"
-#include "device_name.h"
+#include "block_size.hpp"
+#include "device_name.hpp"
 #include "string"
 
 int main() {
-    const char *device = getDeviceName();// Substitua pelo seu dispositivo
+    const char *device = "/dev/sda6";// Substitua pelo seu dispositivo
     std::cout << "device: " << device << '\n';
     unsigned int block_size = getBlockSize(device);
 
