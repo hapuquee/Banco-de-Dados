@@ -234,8 +234,8 @@ int main() {
     tree.insert(5);
     tree.insert(15);
     tree.insert(25);
+    tree.insert(30);
 
-    // tree.insert(30);
 
     cout << "B+ Tree após inserções:" << endl;
     tree.printTree();
