@@ -1,4 +1,3 @@
-
 #ifndef BLOCK_SIZE_H
 #define BLOCK_SIZE_H
 
@@ -20,7 +19,7 @@ unsigned int getBlockSize(const char* device) {
     unsigned int block_size;
 
     // Obter o tamanho do setor lógico
-    if (ioctl(fd, BLKSSZGET, &block_size) == -1) {
+    if (ioctl(fd, BLKBSZGET, &block_size) == -1) {
         std::cerr << "Erro ao obter o tamanho do setor lógico." << std::endl;
         close(fd);
         return 0;
